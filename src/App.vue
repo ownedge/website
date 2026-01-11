@@ -982,7 +982,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   background-size: 1.5px 1.5px; /* Dot density */
   pointer-events: none;
   z-index: 50;
-  opacity: 0.9;
+  opacity: 0.75;
 }
 
 /* Vignette / Tube Curvature Simulation */

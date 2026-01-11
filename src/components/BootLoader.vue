@@ -467,14 +467,14 @@ onUnmounted(() => {
     height: 100%;
     background: repeating-linear-gradient(
         to bottom,
-        transparent 0px,
         transparent 2px,
-        rgba(0, 0, 0, 0.4) 3px,
-        rgba(0, 0, 0, 0.4) 4px
+        transparent 2px,
+        rgba(0, 0, 0, 0.4) 5px,
+        rgba(0, 0, 0, 0.4) 5px
     );
     pointer-events: none;
     z-index: 10;
-    opacity: 0.9;
+    opacity: 1;
 }
 
 .fade-enter-active,

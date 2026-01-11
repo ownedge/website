@@ -53,7 +53,7 @@
 .crosshair.center::before, .crosshair.center::after {
     content: '';
     position: absolute;
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,0.3);
 }
 /* Cross shape */
 .crosshair.center::before {
