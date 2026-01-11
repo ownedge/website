@@ -4,9 +4,8 @@ export const SYSTEM_CONFIG = {
         MASTER_VOL: 0.9,
         // Relative volumes per section
         BOOT_VOL: 0.7,
-        ATMOSPHERE_VOL: 0.02,
-        MUSIC_VOL: 0.2,
-        EASTER_EGG_VOL: 0.15,
+        ATMOSPHERE_VOL: 0.018,
+        MUSIC_VOL: 0.13,
         
         // Music Timing
         MUSIC_START_DELAY: 5500,     // ms

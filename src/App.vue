@@ -7,7 +7,6 @@ import BootLoader from './components/BootLoader.vue'
 import VfdDisplay from './components/VfdDisplay.vue'
 import CrtControls from './components/CrtControls.vue'
 import TrackerOverlay from './components/TrackerOverlay.vue'
-import NoiseOverlay from './components/NoiseOverlay.vue'
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { chatStore } from './store/chatStore';
 
@@ -343,7 +342,7 @@ const handleGlobalKeydown = (e) => {
       }
   }
 
-  // 3. Handle Skip/Reboot early (Safari Fix)
+  // 2. Handle Skip/Reboot early (Safari Fix)
   if (isEscape) {
       if (!isBooted.value) {
           // If NOT booted, Escape ALWAYS skips the BIOS/Dialup sequence
@@ -363,7 +362,7 @@ const handleGlobalKeydown = (e) => {
 
   if (!isBooted.value) return;
 
-  // 2. Ignore if typing in an input or textarea
+  // 3. Ignore if typing in an input or textarea
   const target = e.target;
   const isInput = target.matches('input, textarea, [contenteditable="true"]');
   if (isInput) {
@@ -709,7 +708,7 @@ const updateKnobText = (type, val) => {
     vfdKnobInfo.value = { label, value: `${pct}%` };
 };
 
-const scanlineColor = `hsl(10, 0%, 10%)`;
+const scanlineColor = `hsl(188, 40%, 9%)`;
 const vfdBgColor = `hsl(188, 42%, 7%)`;
 
 
@@ -798,7 +797,6 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         </div>
         
         <!-- Fixed Foreground Overlays -->
-        <NoiseOverlay />
         <div class="scanlines"></div>
         <div class="vignette"></div>
       </div>
@@ -981,7 +979,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
     transparent 2%,
     v-bind(scanlineColor) 95%
   );
-  background-size: 2px 2px; /* Dot density */
+  background-size: 1.5px 1.5px; /* Dot density */
   pointer-events: none;
   z-index: 50;
   opacity: 0.9;

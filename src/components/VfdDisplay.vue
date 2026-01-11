@@ -489,7 +489,7 @@ watch(() => props.mode, (newMode) => {
   /* Create a 'mask' of black with transparent holes */
   background: radial-gradient(
     circle,
-    transparent 2%,
+    transparent 10%,
     v-bind(scanlineColor) 95%
   );
   background-size: 2px 2px; /* Dot density */
