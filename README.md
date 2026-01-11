@@ -11,13 +11,14 @@ Live at: https://ownedge.com
 
 ## 🎨 Aesthetic & Design Philosophy
 
-Ownedge is a love letter to **retro-futurism**, blending the raw utility of 90s tracker interfaces with the sleek, high-fidelity visuals of modern web design.
+Ownedge.com is a love letter to **retro-futurism**, blending the raw utility of terminal interfaces with the sleek, high-fidelity visuals of modern web design along with retro visual cues of the 80's and 90's.
 
 ### Key Visual Elements
-*   **CRT Simulation**: A multi-layered visual stack including scanlines, phosphor persistence, and curvature distortion to simulate a high-quality CRT monitor.
-*   **VFD (Vacuum Fluorescent Display)**: Typography and color palettes (Teals/cyans against deep blacks) mimic the luminous glow of vintage VFD equipment.
-*   **Isometric Architecture**: UI elements like the "Speaker" and "Keyboard" indicators use isometric projection to ground the digital interface in a physical spatial context.
-*   **Music Tracker Layout**: The main navigation overlay (`TrackerOverlay`) is designed to look like a music tracker (e.g., FastTracker II, Impulse Tracker), symbolizing the raw creation of art through code.
+*   **CRT Simulation**: A multi-layered visual stack including scanlines, phosphor burn-in persistence (disabled for performance), and noise to simulate a high-quality CRT monitor.
+*   **Light reflection**: The most bright content close to the edge, shines on the monitor bezel for a more realistic feel.
+*   **VFD (Vacuum Fluorescent Display)**: Typography and color palettes (Teals/cyans against deep blacks) mimic the luminous glow of vintage VFD equipment with animations that remind classic pinball machines.
+*   **Music Tracker Layout**: The top overlay is actually the background music track visualization like a music tracker (e.g., FastTracker II, Impulse Tracker), symbolizing the raw creation of art through code.
+*   **Keyboard navigation**: The lost art of using the keyboard as a much more efficient user interface. You can virtually navigate to everything on the website using only the keyboard.
 
 ---
 
@@ -41,7 +42,7 @@ The application features a custom audio subsystem capable of real-time sound syn
 
 #### 3. Backend & Legacy Hacks (PHP)
 *   **Guestbook & Chat**: Powered by simple PHP scripts (`guestbook.php`, `chat.php`) located in the `/public` directory.
-*   **The Hack**: Why PHP in 2026? To leverage **legacy free WordPress hosting** providers. By dropping these simple scripts into a standard LAMP stack environment, we get persistent storage (JSON/txt files) and dynamic functionality without paying for a VPS or cloud functions. It's a pragmatic nod to the "old web".
+*   **The Hack**: Why PHP in 2026? To leverage my domain's **free WordPress hosting**. By dropping these simple scripts into a standard LAMP stack environment, we get persistent storage (JSON/txt files) and dynamic functionality without paying for a VPS or cloud functions. It's a pragmatic nod to the "old web".
 
 #### 4. SEO & Structured Data
 *   **Video Indexing**: Background video assets are served from stable public URLs (`/ownedge.mp4`) with full `VideoObject` Schema.org markup injected into the head, ensuring rich results in search engines.
