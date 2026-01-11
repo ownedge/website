@@ -14,7 +14,7 @@ Live at: https://ownedge.com
 Ownedge.com is a love letter to **retro-futurism**, blending the raw utility of terminal interfaces with the sleek, high-fidelity visuals of modern web design along with retro visual cues of the 80's and 90's.
 
 ### Key Visual Elements
-*   **CRT Simulation**: A multi-layered visual stack including scanlines, phosphor burn-in persistence (disabled for performance), and noise to simulate a high-quality CRT monitor.
+*   **CRT Simulation**: A multi-layered visual stack including scanlines, phosphor burn-in effect and noise (both disabled for performance) to simulate a high-quality CRT monitor.
 *   **Light reflection**: The most bright content close to the edge, shines on the monitor bezel for a more realistic feel.
 *   **VFD (Vacuum Fluorescent Display)**: Typography and color palettes (Teals/cyans against deep blacks) mimic the luminous glow of vintage VFD equipment with animations that remind classic pinball machines.
 *   **Music Tracker Layout**: The top overlay is actually the background music track visualization like a music tracker (e.g., FastTracker II, Impulse Tracker), symbolizing the raw creation of art through code.
