@@ -738,7 +738,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
     <div class="vfd-label-box">
         <img src="./assets/ownedge-logo.png" class="bezel-logo" />
         <div class="vfd-label-text">
-            <div class="vfd-label-line1">VF-1OOO</div>
+            <div class="vfd-label-line1">VFD-1OOO</div>
             <div class="vfd-label-line2">SUPER</div>
         </div>
     </div>

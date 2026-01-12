@@ -228,7 +228,7 @@ onUnmounted(() => {
     </div>
 
     <div class="nav-hint">
-        <svg class="keyboard-svg" viewBox="0 0 280 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="keyboard-svg" viewBox="0 0 280 160" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <g id="big-iso-key">
                     <path d="M10 20 L50 40 L90 20 L50 0 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
@@ -451,7 +451,7 @@ onUnmounted(() => {
 
 .nav-hint {
     position: absolute;
-    bottom: 20px;
+    bottom: 0px;
     right: 40px;
     font-family: var(--font-mono);
     color: var(--color-accent);
