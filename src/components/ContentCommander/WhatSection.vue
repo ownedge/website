@@ -84,50 +84,52 @@ onUnmounted(() => {
       <!-- Right Content -->
       <div class="business-viewport">
 
-        <div v-if="activeTabId === 'services'" class="tab-content">
-          <h4>SERVICES</h4>
-          <div class="service-grid">
-            <div class="service-block">
-              <h5>INTERACTIVE SYSTEMS</h5>
-              <p>Engineering low-latency, high-fidelity interfaces and custom design systems. Specialized in WebGL, real-time visualization, and reactive architecture.</p>
-            </div>
-            <div class="service-block">
-              <h5>CINEMATIC TECH PROPS</h5>
-              <p>Design and fabrication of period-accurate and retro-futuristic interfaces for film. Technically correct terminal systems and hardware peripherals.</p>
-            </div>
-            <div class="service-block">
-              <h5>AEROSPACE & AVIONICS</h5>
-              <p>Specialized aviation solutions including advanced flight training systems, certification protocols, and custom aircraft electronics integration.</p>
-            </div>
-            <div class="service-block">
-              <h5>PRECISION ENGINEERING</h5>
-              <p>Industrial design and manufacturing of custom equipment. Expertise in composite materials, high-precision CNC machining, and industrial 3D printing.</p>
-            </div>
-            <div class="service-block">
-              <h5>STRATEGIC VENTURE</h5>
-              <p>Strategic guidance and seed-stage funding for technical startups. Providing the architectural and capital foundation for ambitious embryonic projects.</p>
-            </div>
-            <div class="service-block">
-              <h5>INFRASTRUCTURE</h5>
-              <p>Design and deployment of resilient, permanent digital infrastructure. Focus on secure, high-availability architecture for modern enterprise assets.</p>
+        <Transition name="fade">
+          <div v-if="activeTabId === 'services'" key="services" class="tab-content">
+            <h4>SERVICES</h4>
+            <div class="service-grid">
+              <div class="service-block">
+                <h5>INTERACTIVE SYSTEMS</h5>
+                <p>Engineering low-latency, high-fidelity interfaces and custom design systems. Specialized in WebGL, real-time visualization, and reactive architecture.</p>
+              </div>
+              <div class="service-block">
+                <h5>CINEMATIC TECH PROPS</h5>
+                <p>Design and fabrication of period-accurate and retro-futuristic interfaces for film. Technically correct terminal systems and hardware peripherals.</p>
+              </div>
+              <div class="service-block">
+                <h5>AEROSPACE & AVIONICS</h5>
+                <p>Specialized aviation solutions including advanced flight training systems, certification protocols, and custom aircraft electronics integration.</p>
+              </div>
+              <div class="service-block">
+                <h5>PRECISION ENGINEERING</h5>
+                <p>Industrial design and manufacturing of custom equipment. Expertise in composite materials, high-precision CNC machining, and industrial 3D printing.</p>
+              </div>
+              <div class="service-block">
+                <h5>STRATEGIC VENTURE</h5>
+                <p>Strategic guidance and seed-stage funding for technical startups. Providing the architectural and capital foundation for ambitious embryonic projects.</p>
+              </div>
+              <div class="service-block">
+                <h5>INFRASTRUCTURE</h5>
+                <p>Design and deployment of resilient, permanent digital infrastructure. Focus on secure, high-availability architecture for modern enterprise assets.</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-if="activeTabId === 'collabs'" class="tab-content">
-          <h4>COLLABS</h4>
-          <p>Past and present collaborations and partnerships.</p>
-          <div class="logo-grid">
-            <div v-for="collab in collabs" :key="collab.name" class="logo-item">
-              <div class="logo-plaque">
-                <img :src="collab.logo" />
-                <div class="logo-overlay">
-                  <span class="overlay-name">{{ collab.name }}</span>
+          <div v-else-if="activeTabId === 'collabs'" key="collabs" class="tab-content">
+            <h4>COLLABS</h4>
+            <p>Past and present collaborations and partnerships.</p>
+            <div class="logo-grid">
+              <div v-for="collab in collabs" :key="collab.name" class="logo-item">
+                <div class="logo-plaque">
+                  <img :src="collab.logo" />
+                  <div class="logo-overlay">
+                    <span class="overlay-name">{{ collab.name }}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Transition>
       </div>
     </div>
   </div>
@@ -192,6 +194,14 @@ onUnmounted(() => {
 /* Right Viewport */
 .business-viewport {
     flex: 1;
+    display: grid;
+    grid-template-areas: "stack";
+    position: relative;
+}
+
+.tab-content {
+    grid-area: stack;
+    width: 100%; /* Ensure full width */
 }
 
 .tab-content h4 {
@@ -314,6 +324,17 @@ onUnmounted(() => {
     to { opacity: 1; transform: translateY(0); }
 }
 
+
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.4s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
 
 @media (max-width: 900px) {
     .section-content h3 {
