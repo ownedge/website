@@ -749,7 +749,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
     <div class="vfd-label-box">
         <img src="./assets/ownedge-logo.png" class="bezel-logo" />
         <div class="vfd-label-text">
-            <div class="vfd-label-line1">VFD-1OOO</div>
+            <div class="vfd-label-line1">VF-D74O</div>
             <div class="vfd-label-line2">SUPER</div>
         </div>
     </div>
@@ -1044,21 +1044,23 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
     height: 34px;
     width: 37px;
     /* Invert because the logo is likely dark, then dim to match the worn #444 labels */
-    filter: invert(1) brightness(0.4) contrast(1.2) opacity(0.43);
+    filter: invert(1) brightness(0.4) contrast(1.2) opacity(0.4);
     mix-blend-mode: normal; /* Normal for better visibility on dark */
 }
 
 .vfd-label-text {
+    transform: translateY(1px);
     display: flex;
     flex-direction: column;
 }
 
 .vfd-label-line1 {
+    opacity: 0.8;
     font-family: 'Microgramma', 'Courier New', monospace;
     font-size: 0.61rem;
     color: #444;
     letter-spacing: 1px;
-    transition: all 0.25s ease;
+    transition: all 0.05s ease;
     text-align: left;
     line-height: 1.2;
     /* Radial gradient glow from VFD (right side) */
@@ -1072,11 +1074,12 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 }
 
 .vfd-label-line2 {
+    opacity: 0.8;
     font-family: 'Microgramma', 'Courier New', monospace;
     font-size: 0.6rem;
     color: #444;
     letter-spacing: 1px;
-    transition: all 0.25s ease;
+    transition: all 0.05s ease;
     text-align: left;
     margin-top: 1px;
     /* Radial gradient glow from VFD (right side) */
