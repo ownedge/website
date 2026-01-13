@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
     <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png" />
@@ -16,6 +17,8 @@
     <link rel="canonical" href="https://ownedge.com/" />
     <meta name="description" content="Defying the establishment. A digital window for independent creators and builders." />
     <meta name="keywords" content="Ownedge, Independent, Design, Digital window, Builders, Creators" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="theme-color" content="#0d0d0d" />
 
     <script type="application/ld+json">
       {
@@ -34,6 +37,28 @@
         }
       }
     </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Ownedge",
+        "url": "https://ownedge.com/",
+        "logo": "https://ownedge.com/ownedge-logo.png"
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Ownedge",
+        "url": "https://ownedge.com/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://ownedge.com/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -41,6 +66,7 @@
     <meta property="og:title" content="Ownedge | Independent by Design" />
     <meta property="og:description" content="Defying the establishment. A digital window for independent creators and builders." />
     <meta property="og:image" content="https://ownedge.com/favicon-master.png" />
+    <meta property="og:site_name" content="Ownedge" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
@@ -56,7 +82,27 @@
     <script src="/js/chiptune2.js"></script>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <main class="seo-fallback">
+        <h1>Ownedge</h1>
+        <p>
+          Defying the establishment. A digital window for independent creators and builders exploring
+          bold ideas, community, and craft.
+        </p>
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="/what">What</a></li>
+            <li><a href="/why">Why</a></li>
+            <li><a href="/guestbook">Guestbook</a></li>
+            <li><a href="/chat">Chat</a></li>
+          </ul>
+        </nav>
+      </main>
+    </div>
+    <noscript>
+      Ownedge is a digital window for independent creators and builders. Enable JavaScript to
+      experience the full interactive interface.
+    </noscript>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
