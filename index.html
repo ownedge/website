@@ -2,6 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Immediately flag that JS is enabled to prevent FOUC of fallback content
+      document.documentElement.className += ' js-enabled';
+    </script>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -80,6 +84,12 @@
     </script>
     <script src="/js/libopenmpt.js"></script>
     <script src="/js/chiptune2.js"></script>
+    <style>
+      /* Hide SEO fallback only if JS is enabled (Vue will take over) */
+      .js-enabled .seo-fallback {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div id="app">
