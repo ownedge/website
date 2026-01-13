@@ -273,7 +273,7 @@ onUnmounted(() => {
                 </g>
             </g>
         </svg>
-        <div class="hint-label">Keyboard: ON</div>
+        <div class="hint-label">Keyboard<span class="key-label">ON</span></div>
     </div>
   </div>
 </template>
@@ -481,6 +481,16 @@ onUnmounted(() => {
     text-shadow: 0 0 5px var(--color-accent);
 }
 
+.key-label {
+    color: rgba(255, 255, 255, 0.99);
+    font-family: 'Microgramma', 'Courier New', monospace;
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.1rem;
+}
+
 @keyframes fadeInHint {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 0.8; transform: translateY(0); }
@@ -498,11 +508,11 @@ onUnmounted(() => {
 }
 
 .key-inner {
-    transition: transform 0.1s ease-out;
+    transition: transform 0.15s ease-out;
 }
 .key-inner.active {
     transform: translateY(4px);
-    transition: transform 0.05s ease-in;
+    transition: transform 0.1s ease-in;
     filter: drop-shadow(0 0 8px var(--color-accent));
 }
 </style>

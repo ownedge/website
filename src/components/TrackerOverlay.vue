@@ -139,7 +139,7 @@ const draw = () => {
         ctx.save();
         ctx.translate(0, startY);
         ctx.scale(1, -0.35); // Flip UP
-        ctx.fillText(str, startX +1, -4); 
+        ctx.fillText(str, startX +0, -5); 
         ctx.restore();
     }
     
@@ -230,8 +230,9 @@ onUnmounted(() => {
     left: 0;
     width: 100vw;
     height: 100vh;
-    opacity: 0.35; /* Lowered opacity */
-    z-index: 100; 
+    opacity: 1.0; /* Lowered opacity */
+    z-index: 100;
+    filter: blur(3.2px);
 }
 
 canvas {

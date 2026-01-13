@@ -53,6 +53,7 @@ const tabs = [
 const updateScreenRect = () => {
     const el = document.querySelector('.app-container');
     if (el) {
+        void el.offsetHeight;
         screenRect.value = el.getBoundingClientRect();
     }
 };
@@ -260,7 +261,12 @@ const handleBootStart = async () => {
   vfdMode.value = 'logo';
   setTimeout(() => {
         vfdMode.value = 'spectrum';
-  }, 2100); 
+  }, 2100);
+  
+  // 4. Update screenRect after layout settles (Safari fix)
+  setTimeout(() => {
+      updateScreenRect();
+  }, 100);
 }
 
 const handleBootSkip = async () => {
@@ -288,6 +294,11 @@ const handleBootSkip = async () => {
     chatStore.isConnected = true;
     chatStore.showPopup = false;
     await chatStore.init();
+    
+    // 4. Update screenRect after layout settles (Safari fix)
+    setTimeout(() => {
+        updateScreenRect();
+    }, 100);
 };
 
 
@@ -916,7 +927,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   background: radial-gradient(circle at center, #2f2f2f00 1%, #0e0e0e 90%);
   overflow: hidden; /* Container is fixed window */
   /* Reorder filters and use direct CSS where possible */
-  filter: brightness(v-bind(brightness*0.9)) contrast(v-bind(contrast)) url(#spherical-warp);
+  filter: brightness(v-bind(brightness*1.1)) contrast(v-bind(contrast)) url(#spherical-warp);
 }
 
 /* Fixed Background Layer */
