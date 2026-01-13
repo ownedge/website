@@ -7,6 +7,7 @@ import BootLoader from './components/BootLoader.vue'
 import VfdDisplay from './components/VfdDisplay.vue'
 import CrtControls from './components/CrtControls.vue'
 import TrackerOverlay from './components/TrackerOverlay.vue'
+import BezelReflection from './components/BezelReflection.vue'
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { chatStore } from './store/chatStore';
 
@@ -813,20 +814,16 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
       </div>
     </div>
     
-    <!-- SVG Filter for Glitch/Distortion and Texture Masks -->
-    <!-- CRITICAL: Must have dimensions for mask percentages to work -->
-    <svg width="100%" height="100%" style="position: absolute; top:0; left:0; pointer-events: none; z-index: 0;">
-      <defs>
-        <!-- Bezel Mask: Reveals bezel only, hides screen center -->
-        <mask id="bezel-mask" maskUnits="userSpaceOnUse">
-           <rect width="100%" height="100%" fill="white" />
-           <rect x="40" y="40" width="calc(100% - 80px)" height="calc(100% - 120px)" rx="40" fill="black" />
-        </mask>
-      </defs>
-    </svg>
+    <!-- Bezel Reflection Overlay (Tracker Text only) -->
+    <TrackerOverlay 
+      class="bezel-reflection-text" 
+      style="z-index: 100;" 
+      :reflection-only="true" 
+      :screen-rect="screenRect" 
+    />
     
-    <!-- Bezel Reflection Overlay -->
-    <TrackerOverlay class="bezel-reflection" :reflection-only="true" :screen-rect="screenRect" />
+    <!-- Bezel Glow Bars (Menu/Footer reflection) -->
+    <BezelReflection v-if="isBooted" />
 
     <!-- Vintage Sony Sticker (Top Left) -->
     <div class="bezel-sticker">
