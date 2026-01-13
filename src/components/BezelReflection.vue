@@ -33,14 +33,16 @@ const draw = () => {
         // Aligned with user-tuned values
         const heroHeight = windowH - 172; 
         
-        // Use standard filter for true Gaussian blur of the content
-        ctx.filter = "blur(3px)";
+        // Detect Safari (rough check for "different opacity" requirement)
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const opacity = isSafari ? 0.025 : 0.15;
         
         // 1. Menu Bar Glow
         const menuY = heroHeight - scrollTop + 0; 
         
         if (menuY > -50 && menuY < windowH + 50) {
-             ctx.fillStyle = "rgba(255, 255, 255, 0.1)"; // Increased opacity because blur spreads it out
+             ctx.filter = "blur(20px)"; // Menu Blur
+             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
              ctx.fillRect(0, menuY, canvas.width, 44);
         }
         
@@ -48,7 +50,8 @@ const draw = () => {
         const footerY = heroHeight + windowH - 222 - scrollTop;
         
         if (footerY > -50 && footerY < windowH + 50) {
-             ctx.fillStyle = "rgba(255, 255, 255, 0.)";
+             ctx.filter = "blur(6px)"; // Footer Blur (Thinner line needs less blur or it vanishes)
+             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
              ctx.fillRect(0, footerY, canvas.width, 3); 
         }
         
