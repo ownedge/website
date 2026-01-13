@@ -28,6 +28,65 @@ const metadata = {
     chat: { title: "Ownedge | Terminal Cluster", description: "Communicate in real-time with other nodes connected to the Ownedge cluster." }
 };
 
+const fallbackContent = {
+    what: `
+      <main class="seo-fallback">
+        <h1>What We Do</h1>
+        <p>Exploring the boundaries of digital products, strategy, and engineering.</p>
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="/what">What</a></li>
+            <li><a href="/why">Why</a></li>
+            <li><a href="/guestbook">Guestbook</a></li>
+            <li><a href="/chat">Chat</a></li>
+          </ul>
+        </nav>
+      </main>
+    `.trim(),
+    why: `
+      <main class="seo-fallback">
+        <h1>Why We Exist</h1>
+        <p>The Ownedge manifesto: our vision for a more intentional, independent digital future.</p>
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="/what">What</a></li>
+            <li><a href="/why">Why</a></li>
+            <li><a href="/guestbook">Guestbook</a></li>
+            <li><a href="/chat">Chat</a></li>
+          </ul>
+        </nav>
+      </main>
+    `.trim(),
+    guestbook: `
+      <main class="seo-fallback">
+        <h1>Guestbook</h1>
+        <p>Sign the guestbook and join the lineage of terminal users.</p>
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="/what">What</a></li>
+            <li><a href="/why">Why</a></li>
+            <li><a href="/guestbook">Guestbook</a></li>
+            <li><a href="/chat">Chat</a></li>
+          </ul>
+        </nav>
+      </main>
+    `.trim(),
+    chat: `
+      <main class="seo-fallback">
+        <h1>Chat</h1>
+        <p>Communicate in real-time with other nodes connected to the Ownedge cluster.</p>
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="/what">What</a></li>
+            <li><a href="/why">Why</a></li>
+            <li><a href="/guestbook">Guestbook</a></li>
+            <li><a href="/chat">Chat</a></li>
+          </ul>
+        </nav>
+      </main>
+    `.trim()
+};
+
 routes.forEach(route => {
     const routeDir = path.join(distPath, route);
     
@@ -51,6 +110,11 @@ routes.forEach(route => {
         content = content.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="https://ownedge.com/${route}" />`);
         content = content.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://ownedge.com/${route}" />`);
         content = content.replace(/<meta property="twitter:url" content=".*?" \/>/, `<meta property="twitter:url" content="https://ownedge.com/${route}" />`);
+    }
+
+    const fallback = fallbackContent[route];
+    if (fallback) {
+        content = content.replace(/<main class="seo-fallback">[\s\S]*?<\/main>/, fallback);
     }
 
     // Write index.html to the directory
