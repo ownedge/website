@@ -149,6 +149,8 @@ onMounted(() => {
   updateIndexFromUrl();
 
   triggerGlitch();
+  generateFisheyeMap();
+  window.addEventListener('resize', generateFisheyeMap);
 })
 
 const startSelection = (e) => {
@@ -316,6 +318,7 @@ onUnmounted(() => {
   window.removeEventListener('mousedown', handleGlobalMouseDown);
 
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('resize', generateFisheyeMap);
   document.removeEventListener('mouseover', handleGlobalHover);
   window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
   
@@ -590,7 +593,86 @@ const triggerGlitch = () => {
     }
     
     // Schedule next glitch
-    setTimeout(triggerGlitch, Math.random() * 8000 + 2000); 
+    setTimeout(triggerGlitch, Math.random() * 8000 + 2000);
+};
+
+// Fisheye Displacement Map Generator - Spherical/Ellipsoid Projection
+const generateFisheyeMap = () => {
+    const canvas = document.createElement('canvas');
+    
+    // Use the full browser window dimensions for the displacement map
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+    
+    // Center is the actual center of the browser window
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radiusX = width / 2;
+    const radiusY = height / 2;
+    
+    // Spherical bulge parameters
+    const bulgeDepth = 0.03; // How much the sphere bulges (0-1, where 1 is hemisphere)
+    const effectRadius = 1; // How wide the effect spreads
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        // Normalize coordinates to -1 to 1 range
+        const nx = (x - centerX) / radiusX;
+        const ny = (y - centerY) / radiusY;
+        const distance = Math.sqrt(nx * nx + ny * ny);
+        
+        let displaceX = 0;
+        let displaceY = 0;
+        
+        if (distance < effectRadius && distance > 0) {
+          // Use a smoother, more linear displacement function
+          // Instead of sharp spherical math, use a gentler parabolic curve
+          const normalizedDist = distance / effectRadius;
+          
+          // Smoother bulge calculation: use a quadratic falloff for better linearity
+          // This creates a gentler, more uniform bulge across the surface
+          const distSquared = normalizedDist * normalizedDist;
+          const bulgeFactor = (1 - distSquared) * bulgeDepth;
+          
+          // Linear displacement scale based on distance
+          // This maintains better linearity especially near corners
+          const scale = bulgeFactor * 2.5; // Multiplier to amplify the effect
+          
+          // Push pixels outward from center (bulge, not pinch)
+          displaceX = nx * radiusX * scale;
+          displaceY = ny * radiusY * scale;
+        }
+        
+        // Map displacement to 0-255 range (128 = no displacement)
+        // INVERTED: Subtract displacement to create bulge (push outward)
+        const r = Math.max(0, Math.min(255, 128 - displaceX));
+        const g = Math.max(0, Math.min(255, 128 - displaceY));
+        
+        const idx = (y * width + x) * 4;
+        data[idx] = r;     // Red channel = X displacement
+        data[idx + 1] = g; // Green channel = Y displacement
+        data[idx + 2] = 255; // Blue channel = unused
+        data[idx + 3] = 255; // Alpha
+      }
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    const dataURL = canvas.toDataURL();
+    
+    // Update the SVG filter with the generated displacement map
+    const filter = document.querySelector('#fisheye-filter');
+    if (filter) {
+      filter.innerHTML = `
+        <feImage href="${dataURL}" result="displacementMap"/>
+        <feDisplacementMap in="SourceGraphic" in2="displacementMap" scale="180" xChannelSelector="R" yChannelSelector="G"/>
+      `;
+    } 
 };
 
 
@@ -811,6 +893,12 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
            <rect width="100%" height="100%" fill="white" />
            <rect x="40" y="40" width="calc(100% - 80px)" height="calc(100% - 120px)" rx="40" fill="black" />
         </mask>
+        
+        <!-- Fisheye Distortion Filter -->
+        <filter id="fisheye-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="0" numOctaves="1" result="warp" />
+          <feDisplacementMap in="SourceGraphic" in2="warp" scale="0" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
       </defs>
     </svg>
     
@@ -916,7 +1004,15 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   background: radial-gradient(circle at center, #2f2f2f00 1%, #0e0e0e 90%);
   overflow: hidden; /* Container is fixed window */
   /* Reorder filters and use direct CSS where possible */
-  filter: brightness(v-bind(brightness*0.9)) contrast(v-bind(contrast)) url(#spherical-warp);
+  filter: brightness(v-bind(brightness*1.3)) contrast(v-bind(contrast)) url(#fisheye-filter);
+  transform: translate(-3vw, -5vh);
+}
+
+/* Bezel Reflection - needs same shift as content */
+.bezel-reflection {
+  transform: translate(3vw, 4vh);
+  pointer-events: none;
+  z-index: 100;
 }
 
 /* Fixed Background Layer */
@@ -1109,7 +1205,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
     .app-container {
         width: 100%;
         height: 100%;
-        filter: brightness(v-bind(brightness*0.9)) contrast(v-bind(contrast)); /* Remove spherical-warp */
+        filter: brightness(v-bind(brightness*0.9)) contrast(v-bind(contrast)); /* Remove fisheye on mobile */
     }
 
     .scroll-content {
