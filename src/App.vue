@@ -913,7 +913,13 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 11px solid #232323;
+    /* Gradient Border Technique */
+  border: 11px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image: 
+    linear-gradient(#000, #000), /* Inner Content (Black) */
+    radial-gradient(circle at center, #333333 0%, #222222 90%); /* Border Gradient (Dark Inner -> Light Outer) */
 }
 
 .app-container {
