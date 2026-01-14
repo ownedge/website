@@ -14,8 +14,16 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <!-- WWW Redirect -->
+    <script>
+      if (window.location.hostname.startsWith('www.')) {
+        var newUrl = window.location.protocol + "//" + window.location.hostname.substring(4) + window.location.pathname + window.location.search + window.location.hash;
+        window.location.replace(newUrl);
+      }
+    </script>
+
     <!-- SEO Meta Tags -->
     <title>Ownedge | Independent by Design</title>
     <link rel="canonical" href="https://ownedge.com/" />
