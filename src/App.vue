@@ -827,7 +827,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 
     <!-- Vintage Sony Sticker (Top Left) -->
     <div class="bezel-sticker">
-        <img src="./assets/sony-sticker.png" />
+        <img src="./assets/corner-sticker.png" />
         <div class="sticker-wear"></div>
     </div>
   </div>
