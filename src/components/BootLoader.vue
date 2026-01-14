@@ -21,7 +21,7 @@ const VISUALIZATION_CONFIG = {
     minFreqIndex: 0,
     maxFreqIndex: 15,
     threshold: 150,
-    dotSize: 4.0,
+    dotSize: 8.5,
     gap: 5,
     horizontalPadding: 10
 };
@@ -172,21 +172,51 @@ const startVisualization = () => {
     const draw = () => {
         const data = SoundManager.getDialUpAudioData();
         if (data) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Trail Effect: Fade out previous frames instead of clearing instantly
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // 0.2 = Long trails, 0.5 = Short trails
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             const { minFreqIndex, maxFreqIndex, threshold, dotSize, gap, horizontalPadding } = VISUALIZATION_CONFIG;
+            
+            // Find the single dominant frequency (Peak)
+            let maxVal = -1;
+            let maxIdx = -1;
+            
+            // Search only within our configured range
+            // We map the visual X range to these indices
             const range = maxFreqIndex - minFreqIndex;
             const pointsToShow = Math.floor((canvas.width - (horizontalPadding * 2)) / (dotSize + gap));
-            const step = range / pointsToShow;
+            const step = range / pointsToShow; // This relates visual index 'i' to data index
             
-            ctx.fillStyle = '#ff0000';
+            // Find and Draw Dominant Peak (Red Square) - Existing Logic
+            let bestI = -1;
 
             for (let i = 0; i < pointsToShow; i++) {
                 const dataIndex = Math.floor(minFreqIndex + (i * step));
-                if (dataIndex < data.length && data[dataIndex] > threshold) {
-                    const x = horizontalPadding + (i * (dotSize + gap));
-                    const val = (data[dataIndex] / 255) * canvas.height;
-                    ctx.fillRect(x - dotSize/2, canvas.height - val - dotSize/2, dotSize, dotSize);
+                if (dataIndex < data.length) {
+                    const val = data[dataIndex];
+                    if (val > maxVal) {
+                        maxVal = val;
+                        maxIdx = dataIndex;
+                        bestI = i;
+                    }
                 }
+            }
+            
+            ctx.fillStyle = '#ff0000';
+
+            // Draw ONLY the dominant peak
+            if (maxVal > threshold && bestI !== -1) {
+                const x = horizontalPadding + (bestI * (dotSize + gap));
+                
+                // Map Amplitude (0-255) to Y Position
+                // 255 = Top (0), 0 = Bottom (height)
+                // Invert logic: val/255 * height = height from bottom
+                // Y = height - heightFromBottom
+                const heightFromBottom = (maxVal / 255) * canvas.height;
+                const y = canvas.height - heightFromBottom - (dotSize / 2);
+                
+                ctx.fillRect(x - dotSize/2, y, dotSize, dotSize);
             }
         }
         animationFrameId = requestAnimationFrame(draw);
