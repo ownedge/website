@@ -29,7 +29,13 @@ const windowHeight = ref(window.innerHeight)
 const mouseX = ref(window.innerWidth / 2)
 const mouseY = ref(window.innerHeight / 2)
 
-const isBooted = ref(false)
+const isCrawler = () => {
+  const ua = navigator.userAgent.toLowerCase();
+  return /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp/.test(ua);
+};
+
+// Initialize isBooted to true if crawler, effectively skipping the intro
+const isBooted = ref(isCrawler())
 const screenRect = ref(null); // Cache for performance
 const activeTabIndex = ref(0);
 const lastActiveContentTab = ref(1); // Default to BUSINESS
@@ -482,10 +488,38 @@ const updateMetadata = (index) => {
     const data = metadataMap[tab.id];
     if (data) {
         document.title = data.title;
-        const descriptionTag = document.querySelector('meta[name="description"]');
-        if (descriptionTag) {
-            descriptionTag.setAttribute('content', data.description);
+        
+        let descriptionTag = document.querySelector('meta[name="description"]');
+        if (!descriptionTag) {
+            descriptionTag = document.createElement('meta');
+            descriptionTag.setAttribute('name', 'description');
+            document.head.appendChild(descriptionTag);
         }
+        descriptionTag.setAttribute('content', data.description);
+
+        // Update Open Graph tags
+        const paths = ['/', '/what', '/why', '/guestbook', '/chat'];
+        const path = paths[index] || '/';
+        const url = `https://ownedge.com${path}`;
+
+        const updateMetaTag = (property, content) => {
+            let tag = document.querySelector(`meta[property="${property}"]`);
+            if (!tag) {
+                tag = document.createElement('meta');
+                tag.setAttribute('property', property);
+                document.head.appendChild(tag);
+            }
+            tag.setAttribute('content', content);
+        };
+
+        updateMetaTag('og:title', data.title);
+        updateMetaTag('og:description', data.description);
+        updateMetaTag('og:url', url);
+
+        // Update Twitter tags
+        updateMetaTag('twitter:title', data.title);
+        updateMetaTag('twitter:description', data.description);
+        updateMetaTag('twitter:url', url);
     }
 };
 

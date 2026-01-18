@@ -476,6 +476,7 @@ onUnmounted(() => {
 
 .hint-label {
     font-size: 0.7rem;
+    font-family: 'Microgramma', 'Courier New', monospace;
     letter-spacing: 0.2rem;
     font-weight: bold;
     text-shadow: 0 0 5px var(--color-accent);
