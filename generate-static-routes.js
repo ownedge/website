@@ -13,6 +13,7 @@ const routes = [
     'guestbook',
     'chat'
 ];
+const baseUrl = 'https://ownedge.com';
 
 if (!fs.existsSync(indexPath)) {
     console.error('Error: dist/index.html not found. Run "npm run build" first.');
@@ -124,5 +125,34 @@ routes.forEach(route => {
     
     console.log(`Generated static route: /${route}/index.html with metadata`);
 });
+
+// Generate Sitemap.xml
+const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+${routes.map(route => `  <url>
+    <loc>${baseUrl}/${route}</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+fs.writeFileSync(path.join(distPath, 'sitemap.xml'), sitemapContent);
+console.log('Generated sitemap.xml 🗺️');
+
+// Generate Robots.txt
+const robotsContent = `User-agent: *
+Allow: /
+
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+fs.writeFileSync(path.join(distPath, 'robots.txt'), robotsContent);
+console.log('Generated robots.txt 🤖');
 
 console.log('Static route generation complete! 🦾');

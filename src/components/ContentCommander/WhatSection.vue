@@ -121,7 +121,7 @@ onUnmounted(() => {
             <div class="logo-grid">
               <div v-for="collab in collabs" :key="collab.name" class="logo-item">
                 <div class="logo-plaque">
-                  <img :src="collab.logo" />
+                  <img :src="collab.logo" :alt="collab.name" />
                   <div class="logo-overlay">
                     <span class="overlay-name">{{ collab.name }}</span>
                   </div>
