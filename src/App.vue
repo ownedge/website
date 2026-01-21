@@ -333,7 +333,7 @@ onUnmounted(() => {
   window.removeEventListener('mouseup', endSelection);
   window.removeEventListener('mousedown', handleGlobalMouseDown);
 
-  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('resize', handleResize);
   document.removeEventListener('mouseover', handleGlobalHover);
   window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
   
@@ -639,8 +639,6 @@ const triggerGlitch = () => {
     setTimeout(triggerGlitch, Math.random() * 8000 + 2000); 
 };
 
-
-
 const heroStyle = computed(() => {
   const x = (mouseX.value - windowWidth.value / 2) * 0.005
   const y = (mouseY.value - windowHeight.value / 2) * 0.005
@@ -878,7 +876,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 40px 80px 40px; /* Thicker chin */
+  padding: 45px 40px 85px 40px; /* Thicker chin */
   position: relative;
   overflow: hidden;
   user-select: none; /* Disable global text selection */
@@ -916,8 +914,8 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 .bezel-sticker {
     position: absolute;
     top: 8px; /* Top bezel */
-    left: 11px; /* Left bezel */
-    width: 40px; /* Adjust size for Sony sticker */
+    left: 7px; /* Left bezel */
+    width: 43px; /* Adjust size for Sony sticker */
     height: auto;
     z-index: 15;
     filter: contrast(0.8) brightness(1.7);
