@@ -157,7 +157,7 @@ const formatTime = (isoString) => {
       <div class="irc-sidebar">
         <div class="sidebar-header">USERS [{{ chatStore.users.length + 1 }}]</div>
         <div class="user-list">
-          <div class="user-item self">{{ chatStore.nickname }}</div>
+          <div class="user-item self">{{ chatStore.chatNickname || chatStore.nickname }}</div>
           <div v-for="u in chatStore.users" :key="u" class="user-item">{{ u }}</div>
         </div>
       </div>

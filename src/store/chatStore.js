@@ -20,8 +20,8 @@ export const chatStore = reactive({
         this.messages = [];
         this.chatNickname = null; // Reset
         
-        // 1. Fetch Users FIRST to check for duplicates
-        await this.fetchUsers();
+        // 1. Fetch Users RAW (don't filter self) to check for duplicates
+        await this.fetchUsers(false);
         
         // 2. Negotiate Unique Nickname
         if (this.nickname) {
@@ -29,7 +29,8 @@ export const chatStore = reactive({
             let candidate = base;
             let suffix = 2;
             
-            // Check case-insensitive against online users
+            // Check case-insensitive against ALL online users
+            // Use this.users directly because we passed false above
             while (this.users.some(u => u.toLowerCase() === candidate.toLowerCase())) {
                 candidate = `${base}${suffix}`;
                 suffix++;
@@ -42,7 +43,8 @@ export const chatStore = reactive({
                     id: 'sys-rename-' + Date.now(),
                     type: 'system',
                     text: `*** Nickname '${this.nickname}' is taken. You are connected as '${this.chatNickname}'.`,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    localOnly: true
                 });
             }
         }
@@ -118,15 +120,19 @@ export const chatStore = reactive({
         }
     },
 
-    async fetchUsers() {
+    async fetchUsers(filterSelf = true) {
         try {
             const response = await fetch(`${API_BASE}?action=users`);
             if (response.ok) {
                 const data = await response.json();
                 if (Array.isArray(data)) {
-                    // Filter out our OWN nickname (whether preferred or effective)
-                    const myNick = this.chatNickname || this.nickname;
-                    this.users = data.filter(u => u !== myNick);
+                    if (filterSelf) {
+                        // Filter out our OWN nickname (whether preferred or effective)
+                        const myNick = this.chatNickname || this.nickname;
+                        this.users = data.filter(u => u !== myNick);
+                    } else {
+                        this.users = data;
+                    }
                 } else {
                     console.error("fetchUsers: Expected array, got:", data);
                 }
@@ -287,7 +293,7 @@ export const chatStore = reactive({
         this.chatNickname = null; // Reset effective nick
 
         // 3. Negotiate unique nickname again (re-using logic from init)
-        await this.fetchUsers();
+        await this.fetchUsers(false);
         let candidate = cleanNick;
         let suffix = 2;
         while (this.users.some(u => u.toLowerCase() === candidate.toLowerCase())) {
