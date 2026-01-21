@@ -32,7 +32,8 @@ const metadata = {
 const fallbackContent = {
     what: `
       <main class="seo-content">
-        <h1>What We Do</h1>
+        <h1>Ownedge</h1>
+        <h2>What We Do</h2>
         <p>Exploring the boundaries of digital products, strategy, and engineering.</p>
         <nav aria-label="Primary">
           <ul>
@@ -46,7 +47,8 @@ const fallbackContent = {
     `.trim(),
     why: `
       <main class="seo-content">
-        <h1>Why We Exist</h1>
+        <h1>Ownedge</h1>
+        <h2>Why We Exist</h2>
         <p>The Ownedge manifesto: our vision for a more intentional, independent digital future.</p>
         <nav aria-label="Primary">
           <ul>
@@ -60,7 +62,8 @@ const fallbackContent = {
     `.trim(),
     guestbook: `
       <main class="seo-content">
-        <h1>Guestbook</h1>
+        <h1>Ownedge</h1>
+        <h2>Guestbook</h2>
         <p>Sign the guestbook and join the lineage of terminal users.</p>
         <nav aria-label="Primary">
           <ul>
@@ -74,7 +77,8 @@ const fallbackContent = {
     `.trim(),
     chat: `
       <main class="seo-content">
-        <h1>Chat</h1>
+        <h1>Ownedge</h1>
+        <h2>Chat</h2>
         <p>Communicate in real-time with other nodes connected to the Ownedge cluster.</p>
         <nav aria-label="Primary">
           <ul>
