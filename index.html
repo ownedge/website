@@ -86,30 +86,57 @@
     <script src="/js/libopenmpt.js"></script>
     <script src="/js/chiptune2.js"></script>
     <style>
-      /* Hide SEO fallback only if JS is enabled (Vue will take over) */
-      .js-enabled .seo-fallback {
-        display: none;
+      /* SEO Content: Visible to bots, hidden from users via overlay */
+      .seo-content { 
+        color: #eaeaea; 
+        background: #000; 
+        padding: 2rem;
+        font-family: sans-serif;
+      }
+      
+      /* Hide SEO content when JS is enabled if desired, 
+         but the overlay handles the visual hiding more gracefully. */
+      .js-enabled .seo-content {
+        /* display: none; */ 
+      }
+
+      /* Boot Overlay: Hides the "boring" HTML until Vue mounts */
+      .boot-overlay {
+        position: fixed; 
+        inset: 0;
+        background: #000; /* Solid black to match bootloader start */
+        z-index: 99999;
+        pointer-events: none;
+        transition: opacity 1.5s ease;
+      }
+
+      /* Once Vue mounts, fade this out */
+      .app-mounted .boot-overlay { 
+        opacity: 0; 
       }
     </style>
   </head>
   <body>
     <div id="app">
-      <main class="seo-fallback">
+      <main class="seo-content">
         <h1>Ownedge</h1>
         <p>
           Defying the establishment. A digital window for independent creators and builders exploring
           bold ideas, community, and craft.
         </p>
         <nav aria-label="Primary">
-          <ul>
-            <li><a href="/what">What</a></li>
-            <li><a href="/why">Why</a></li>
-            <li><a href="/guestbook">Guestbook</a></li>
-            <li><a href="/chat">Chat</a></li>
-          </ul>
-        </nav>
+            <ul>
+              <li><a href="/what">What</a></li>
+              <li><a href="/why">Why</a></li>
+              <li><a href="/guestbook">Guestbook</a></li>
+              <li><a href="/chat">Chat</a></li>
+            </ul>
+          </nav>
       </main>
     </div>
+    
+    <!-- Static Overlay for transition -->
+    <div class="boot-overlay" aria-hidden="true"></div>
     <noscript>
       Ownedge is a digital window for independent creators and builders. Enable JavaScript to
       experience the full interactive interface.
