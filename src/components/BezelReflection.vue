@@ -31,7 +31,7 @@ const draw = () => {
         
         // --- BEZEL GLOW LOGIC ---
         // Aligned with user-tuned values
-        const heroHeight = windowH - 177; 
+        const heroHeight = windowH - 175; 
         
         // Detect Safari (rough check for "different opacity" requirement)
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -41,13 +41,13 @@ const draw = () => {
         const menuY = heroHeight - scrollTop + 0; 
         
         if (menuY > -50 && menuY < windowH + 50) {
-             ctx.filter = "blur(20px)"; // Menu Blur
+             ctx.filter = "blur(18px)"; // Menu Blur
              ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
              ctx.fillRect(0, menuY, canvas.width, 44);
         }
         
         // 2. Footer Glow
-        const footerY = heroHeight + windowH - 233 - scrollTop;
+        const footerY = heroHeight + windowH - 229 - scrollTop;
         
         if (footerY > -50 && footerY < windowH + 50) {
              ctx.filter = "blur(6px)"; // Footer Blur (Thinner line needs less blur or it vanishes)
@@ -67,8 +67,8 @@ const draw = () => {
         ctx.lineJoin = 'round';
         
         const padX = 40;
-        const padTop = 45;
-        const padBot = 85;
+        const padTop = 43;
+        const padBot = 83;
         const borderW = 11;
         // The outer CSS radius is 40px. 
         // We stroke strictly along the center (offset 5.5px).

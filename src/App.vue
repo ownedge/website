@@ -876,7 +876,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 45px 40px 85px 40px; /* Thicker chin */
+  padding: 43px 40px 83px 40px; /* Thicker chin */
   position: relative;
   overflow: hidden;
   user-select: none; /* Disable global text selection */
@@ -914,8 +914,8 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 .bezel-sticker {
     position: absolute;
     top: 8px; /* Top bezel */
-    left: 7px; /* Left bezel */
-    width: 43px; /* Adjust size for Sony sticker */
+    left: 9px; /* Left bezel */
+    width: 42px; /* Adjust size for Sony sticker */
     height: auto;
     z-index: 15;
     filter: contrast(0.8) brightness(1.7);
