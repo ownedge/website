@@ -9,7 +9,7 @@ const logContainer = ref(null);
 const isValidNickname = computed(() => chatStore.nickname.trim().length >= 3);
 
 const focusInput = async () => {
-    // Retry focus a few times to account for rendering/animation
+    // Retry focus a few times to account for rendering/animation.
     for (let i = 0; i < 3; i++) {
         await nextTick();
         if (messageInput.value) {
