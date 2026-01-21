@@ -4,7 +4,7 @@ const isProd = import.meta.env.PROD;
 const API_BASE = isProd ? '/chat.php' : 'https://ownedge.com/chat.php';
 
 export const chatStore = reactive({
-    nickname: '',
+    chatNickname: null, // The actual unique nickname used on the network
     isConnected: false,
     showPopup: true,
     messages: [],
@@ -16,14 +16,40 @@ export const chatStore = reactive({
     lastId: 0,
     
     async init() {
-        // Mark joining time to avoid seeing historical messages
-        this.lastId = (Date.now() / 1000) - 0.5; // Offset slightly to guarantee catching your own join message
+        this.lastId = (Date.now() / 1000) - 0.5;
         this.messages = [];
+        this.chatNickname = null; // Reset
+        
+        // 1. Fetch Users FIRST to check for duplicates
+        await this.fetchUsers();
+        
+        // 2. Negotiate Unique Nickname
+        if (this.nickname) {
+            let base = this.nickname;
+            let candidate = base;
+            let suffix = 2;
+            
+            // Check case-insensitive against online users
+            while (this.users.some(u => u.toLowerCase() === candidate.toLowerCase())) {
+                candidate = `${base}${suffix}`;
+                suffix++;
+            }
+            
+            this.chatNickname = candidate;
+            
+            if (this.chatNickname !== this.nickname) {
+                this.addMessage({
+                    id: 'sys-rename-' + Date.now(),
+                    type: 'system',
+                    text: `*** Nickname '${this.nickname}' is taken. You are connected as '${this.chatNickname}'.`,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
         
         await Promise.all([
             this.fetchTopic(),
-            this.fetchMessages(),
-            this.fetchUsers()
+            this.fetchMessages()
         ]);
         this.startPolling();
     },
@@ -38,7 +64,6 @@ export const chatStore = reactive({
                     author: data.author || 'Admin', 
                     modified: data.modified 
                 };
-                // Print topic to log
                 this.messages.push({
                     id: 'topic-' + Date.now(),
                     type: 'system',
@@ -54,14 +79,13 @@ export const chatStore = reactive({
             const response = await fetch(`${API_BASE}?action=topic`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Include nickname so we know who changed it
-                body: JSON.stringify({ topic: newText, user: this.nickname })
+                body: JSON.stringify({ topic: newText, user: this.chatNickname || this.nickname })
             });
             if (response.ok) {
                 const data = await response.json();
                 this.topic = { 
                     text: data.topic, 
-                    author: data.author || this.nickname, 
+                    author: data.author || (this.chatNickname || this.nickname), 
                     modified: data.modified 
                 };
             }
@@ -75,13 +99,11 @@ export const chatStore = reactive({
             if (response.ok) {
                 const data = await response.json();
                 if (Array.isArray(data) && data.length > 0) {
-                    // Filter out duplicates (though 'since' should handle it)
                     const newMsgs = data.filter(m => !this.messages.find(existing => existing.id === m.id));
                     if (newMsgs.length > 0) {
                         this.messages.push(...newMsgs);
                         this.lastId = data[data.length - 1].id;
 
-                        // Sync header topic if anyone changed it
                         if (newMsgs.some(m => m.type === 'system' && m.text.includes('changed the topic to:'))) {
                             this.fetchTopic();
                         }
@@ -102,7 +124,9 @@ export const chatStore = reactive({
             if (response.ok) {
                 const data = await response.json();
                 if (Array.isArray(data)) {
-                    this.users = data.filter(u => u !== this.nickname);
+                    // Filter out our OWN nickname (whether preferred or effective)
+                    const myNick = this.chatNickname || this.nickname;
+                    this.users = data.filter(u => u !== myNick);
                 } else {
                     console.error("fetchUsers: Expected array, got:", data);
                 }
@@ -117,21 +141,23 @@ export const chatStore = reactive({
 
     async sendHeartbeat() {
         if (!this.isConnected || !this.nickname) return;
+        const activeNick = this.chatNickname || this.nickname;
         try {
             await fetch(`${API_BASE}?action=presence`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nickname: this.nickname })
+                body: JSON.stringify({ nickname: activeNick })
             });
         } catch (e) {}
     },
 
     async addMessage(msg) {
+        const activeNick = this.chatNickname || this.nickname;
         const localId = 'temp-' + Date.now() + Math.random();
         const localMsg = { 
             ...msg, 
             id: localId, 
-            user: msg.user || this.nickname,
+            user: msg.user || activeNick,
             timestamp: new Date().toISOString()
         };
         
@@ -148,22 +174,18 @@ export const chatStore = reactive({
             if (response.ok) {
                 const verifiedMsg = await response.json();
                 
-                // 1. Check if background polling already grabbed this message
                 const alreadySynced = this.messages.find(m => m.id === verifiedMsg.id);
                 const tempIdx = this.messages.findIndex(m => m.id === localId);
                 
                 if (alreadySynced) {
-                    // It's already there with the real ID, so just discard the temp one
                     if (tempIdx !== -1) this.messages.splice(tempIdx, 1);
                 } else {
-                    // Not there yet, so "upgrade" the temp one to the real ID
                     if (tempIdx !== -1) {
                         this.messages[tempIdx].id = verifiedMsg.id;
                         this.messages[tempIdx].timestamp = verifiedMsg.timestamp;
                     }
                 }
                 
-                // 2. Advance lastId to ensure we don't fetch it again
                 if (parseFloat(verifiedMsg.id) > parseFloat(this.lastId)) {
                     this.lastId = verifiedMsg.id;
                 }
@@ -180,11 +202,12 @@ export const chatStore = reactive({
 
     async leave() {
         if (!this.isConnected || !this.nickname) return;
+        const activeNick = this.chatNickname || this.nickname;
         try {
             await fetch(`${API_BASE}?action=leave`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nickname: this.nickname }),
+                body: JSON.stringify({ nickname: activeNick }),
                 keepalive: true 
             });
         } catch (e) {}
@@ -200,37 +223,30 @@ export const chatStore = reactive({
     startPolling() {
         if (this.pollingInterval) return;
         
-        // 1. Setup Visibility Listener with saved reference for clean removal
         this._handler = this.handleVisibility.bind(this);
         document.addEventListener('visibilitychange', this._handler);
 
-        // 2. Initial Sync
         this.sendHeartbeat();
         this.fetchMessages();
         this.fetchUsers();
         
-        // 3. Main Sync Loop (Messages/Users)
         let lastBackgroundSync = 0;
         this.pollingInterval = setInterval(() => {
             const isVisible = document.visibilityState === 'visible';
             const now = Date.now();
 
             if (isVisible) {
-                // Foreground: Regular 2s sync
                 this.fetchMessages();
                 this.fetchUsers();
             } else if (now - lastBackgroundSync > 30000) {
-                // Background: Slow 30s sync
                 this.fetchMessages();
                 this.fetchUsers();
                 lastBackgroundSync = now;
             }
         }, 2000);
 
-        // 4. Heartbeat Loop (Stays consistent at 10s to prevent timeout)
         this.heartbeatInterval = setInterval(() => this.sendHeartbeat(), 10000);
 
-        // 5. Exit Listener
         this._unloadHandler = () => this.leave();
         window.addEventListener('beforeunload', this._unloadHandler);
     },
@@ -260,21 +276,37 @@ export const chatStore = reactive({
             return;
         }
 
-        const oldNick = this.nickname;
         const cleanNick = newNick.trim();
-
-        // 1. Leave with old nick
+        
+        // 1. Leave with old nick (using current chatNickname)
         await this.leave();
 
-        // 2. Update state and persistence
+        // 2. Update persistence
         this.nickname = cleanNick;
         localStorage.setItem('chat_nickname', cleanNick);
+        this.chatNickname = null; // Reset effective nick
 
-        // 3. Confirm with new presence
+        // 3. Negotiate unique nickname again (re-using logic from init)
+        await this.fetchUsers();
+        let candidate = cleanNick;
+        let suffix = 2;
+        while (this.users.some(u => u.toLowerCase() === candidate.toLowerCase())) {
+            candidate = `${cleanNick}${suffix}`;
+            suffix++;
+        }
+        this.chatNickname = candidate;
+
+        // 4. Confirm with new presence
         await this.sendHeartbeat();
+        
+        let msg = `*** Your nickname is now ${this.chatNickname}`;
+        if (this.chatNickname !== cleanNick) {
+            msg += ` (original '${cleanNick}' was taken)`;
+        }
+        
         this.addMessage({ 
             type: 'system', 
-            text: `*** Your nickname is now ${cleanNick}`,
+            text: msg,
             localOnly: true 
         });
     },
