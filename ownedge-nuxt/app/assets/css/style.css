@@ -1,0 +1,79 @@
+@font-face {
+  font-family: 'Microgramma';
+  src: url('../fonts/MICROGME.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rockybilly';
+  src: url('../fonts/Rockybilly.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --color-bg: #101010; /* Darker for bezel contrast */
+  --color-text: #ffffff;
+  --color-accent: #21f1eb; /* Cyan/Teal tech color */
+  --grid-line: rgba(255, 255, 255, 0.08);
+  --font-main: 'Microgramma', sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-script: 'Rockybilly', cursive;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #000; /* Black bezel area */
+  color: var(--color-text);
+  font-family: var(--font-main);
+  overflow: hidden; /* Fullscreen logic */
+  width: 100vw;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  cursor: crosshair; /* Fallback */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom Cursor moved to App.vue or kept simple here. Let's use CSS cursor for performance */
+body {
+    cursor: url('data:image/svg+xml;utf8,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><line x1="10" y1="0" x2="10" y2="20" stroke="white" stroke-width="1"/><line x1="0" y1="10" x2="20" y2="10" stroke="white" stroke-width="1"/></svg>') 10 10, crosshair;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Animation Keyframes */
+@keyframes drawLine {
+    from { transform: scaleX(0); opacity: 0; }
+    to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes drawLineV {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes glitchFade {
+    0% { opacity: 0; transform: skewX(-20deg); }
+    20% { opacity: 1; transform: skewX(20deg); }
+    40% { transform: skewX(-10deg); }
+    60% { transform: skewX(5deg); }
+    80% { transform: skewX(0); }
+    100% { opacity: 1; transform: skewX(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

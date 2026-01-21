@@ -23,6 +23,7 @@
     <meta name="description" content="Defying the establishment. A digital window for independent creators and builders." />
     <meta name="keywords" content="Ownedge, Independent, Design, Digital window, Builders, Creators" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="theme-color" content="#0d0d0d" />
 
     <script type="application/ld+json">
@@ -86,15 +87,24 @@
     <script src="/js/libopenmpt.js"></script>
     <script src="/js/chiptune2.js"></script>
     <style>
-      /* Hide SEO fallback only if JS is enabled (Vue will take over) */
-      .js-enabled .seo-fallback {
-        display: none;
+      body {
+        background-color: black;
+        color: #010101;
+        margin: 0;
+      }
+
+      a {
+        color: #010101; /* Link color (e.g., terminal green) */
+      }
+
+      a:visited {
+        color: #010101; /* Visited link color (slightly darker) */
       }
     </style>
   </head>
   <body>
     <div id="app">
-      <main class="seo-fallback">
+      <main>
         <h1>Ownedge</h1>
         <p>
           Defying the establishment. A digital window for independent creators and builders exploring
