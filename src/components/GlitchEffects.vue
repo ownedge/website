@@ -11,16 +11,16 @@ const props = defineProps({
 // Note: In the original App.vue, 'turbulenceFreq' was defined but the SVG filter utilizing it 
 // seemed to be missing or implicitly handled. We will define a basic turbulence filter for it here
 // so the logic actually does something visible.
-const turbulenceFreq = ref(0.0002);
+const turbulenceFreq = ref(0.002);
 
 const triggerGlitch = () => {
     if (!props.active) return;
 
     // Glitch sequence: Spike -> Recover -> Minor Spike -> Recover
     const spike = () => {
-       turbulenceFreq.value = 0.0044 * Math.random();
+       turbulenceFreq.value = 0.24 * Math.random();
        setTimeout(() => {
-           turbulenceFreq.value = 0.0002; 
+           turbulenceFreq.value = 0.002; 
        }, 50 + Math.random() * 100);
     };
 
@@ -32,7 +32,7 @@ const triggerGlitch = () => {
     }
     
     // Schedule next glitch
-    setTimeout(triggerGlitch, Math.random() * 8000 + 2000); 
+    setTimeout(triggerGlitch, Math.random() * 8000 + 20000); 
 };
 
 // --- 2. Wave/Displacement Glitch ---
@@ -61,7 +61,7 @@ const triggerWaveGlitch = () => {
         } else {
             glitchWaveStrength.value = 0;
             // Schedule next glitch
-            setTimeout(triggerWaveGlitch, Math.random() * 6000 + 6000); // Every 6-12s
+            setTimeout(triggerWaveGlitch, Math.random() * 6000 + 30000); // Every 30-36s
         }
     };
     

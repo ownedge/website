@@ -8,6 +8,7 @@ import VfdDisplay from './components/VfdDisplay.vue'
 import CrtControls from './components/CrtControls.vue'
 import TrackerOverlay from './components/TrackerOverlay.vue'
 import BezelReflection from './components/BezelReflection.vue'
+import GlitchEffects from './components/GlitchEffects.vue'
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { chatStore } from './store/chatStore';
 
@@ -162,8 +163,7 @@ onMounted(() => {
   // Initial Route Check
   updateIndexFromUrl();
 
-  triggerGlitch();
-  setTimeout(() => triggerWaveGlitch(), 1500);
+  updateIndexFromUrl();
 })
 
 const startSelection = (e) => {
@@ -621,61 +621,9 @@ const resetToDefaults = () => {
     SoundManager.playTypingSound();
 };
 
-// Glitch Effect
-const turbulenceFreq = ref(0.0002);
 
-const triggerGlitch = () => {
-    // Removed isBooted check to allow glitching during load
 
-    // Glitch sequence: Spike -> Recover -> Minor Spike -> Recover
-    const spike = () => {
-       turbulenceFreq.value = 0.0044 * Math.random();
-       setTimeout(() => {
-           turbulenceFreq.value = 0.0002; 
-       }, 50 + Math.random() * 100);
-    };
 
-    spike();
-    
-    // Occasionally double glith
-    if (Math.random() > 0.5) {
-        setTimeout(spike, 150);
-    }
-    
-    // Schedule next glitch
-    setTimeout(triggerGlitch, Math.random() * 8000 + 2000); 
-};
-
-// Wave/Displacement Glitch
-const glitchWaveStrength = ref(0);
-
-const triggerWaveGlitch = () => {
-    // Smooth ease-in-out wave distortion
-    const intensity = Math.random() > 0.8 ? 50 : 20; 
-    const duration = 300; // ms duration for the wave to pass
-    const startTime = performance.now();
-
-    const animate = (now) => {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        // Sinusoidal wave 0 -> 1 -> 0 for ease-in-out
-        // progress * PI covers the 0 to 180 degree arc of sine
-        const ease = Math.sin(progress * Math.PI); 
-        
-        glitchWaveStrength.value = intensity * ease;
-
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            glitchWaveStrength.value = 0;
-
-            setTimeout(triggerWaveGlitch, Math.random() * 6000 + 6000); // Every 6-12s
-        }
-    };
-    
-    requestAnimationFrame(animate);
-};
 
 const heroStyle = computed(() => {
   const x = (mouseX.value - windowWidth.value / 2) * 0.005
@@ -902,19 +850,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         <div class="sticker-wear"></div>
     </div>
   </div>
-    <!-- SVG Filters for CRT Effects -->
-    <svg style="position: absolute; width: 0; height: 0; pointer-events: none;">
-      <defs>
-        <filter id="wave-glitch" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.001 0.2" numOctaves="1" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" :scale="glitchWaveStrength" xChannelSelector="R" yChannelSelector="R" />
-        </filter>
-        <!-- Placeholder for existing spherical-warp reference to prevent errors -->
-        <filter id="spherical-warp">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="0" />
-        </filter>
-      </defs>
-    </svg>
+    <GlitchEffects :active="!isBot" />
 </template>
 
 <style scoped>
