@@ -163,6 +163,7 @@ onMounted(() => {
   updateIndexFromUrl();
 
   triggerGlitch();
+  setTimeout(() => triggerWaveGlitch(), 1500);
 })
 
 const startSelection = (e) => {
@@ -645,6 +646,37 @@ const triggerGlitch = () => {
     setTimeout(triggerGlitch, Math.random() * 8000 + 2000); 
 };
 
+// Wave/Displacement Glitch
+const glitchWaveStrength = ref(0);
+
+const triggerWaveGlitch = () => {
+    // Smooth ease-in-out wave distortion
+    const intensity = Math.random() > 0.8 ? 50 : 20; 
+    const duration = 300; // ms duration for the wave to pass
+    const startTime = performance.now();
+
+    const animate = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Sinusoidal wave 0 -> 1 -> 0 for ease-in-out
+        // progress * PI covers the 0 to 180 degree arc of sine
+        const ease = Math.sin(progress * Math.PI); 
+        
+        glitchWaveStrength.value = intensity * ease;
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            glitchWaveStrength.value = 0;
+
+            setTimeout(triggerWaveGlitch, Math.random() * 6000 + 6000); // Every 6-12s
+        }
+    };
+    
+    requestAnimationFrame(animate);
+};
+
 const heroStyle = computed(() => {
   const x = (mouseX.value - windowWidth.value / 2) * 0.005
   const y = (mouseY.value - windowHeight.value / 2) * 0.005
@@ -870,6 +902,19 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         <div class="sticker-wear"></div>
     </div>
   </div>
+    <!-- SVG Filters for CRT Effects -->
+    <svg style="position: absolute; width: 0; height: 0; pointer-events: none;">
+      <defs>
+        <filter id="wave-glitch" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.001 0.2" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" :scale="glitchWaveStrength" xChannelSelector="R" yChannelSelector="R" />
+        </filter>
+        <!-- Placeholder for existing spherical-warp reference to prevent errors -->
+        <filter id="spherical-warp">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="0" />
+        </filter>
+      </defs>
+    </svg>
 </template>
 
 <style scoped>
@@ -969,7 +1014,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   background: radial-gradient(circle at center, #2f2f2f00 1%, #0e0e0e 90%);
   overflow: hidden; /* Container is fixed window */
   /* Reorder filters and use direct CSS where possible */
-  filter: brightness(v-bind(brightness*1.1)) contrast(v-bind(contrast)) url(#spherical-warp);
+  filter: brightness(v-bind(brightness*1.1)) contrast(v-bind(contrast)) url(#spherical-warp) url(#wave-glitch);
 }
 
 /* Fixed Background Layer */
