@@ -31,11 +31,12 @@ const mouseY = ref(window.innerHeight / 2)
 
 const isCrawler = () => {
   const ua = navigator.userAgent.toLowerCase();
-  return /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp/.test(ua);
+  return /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|duckduckbot|lighthouse|google page speed|insights|gtmetrix|pingdom|screaming frog/.test(ua);
 };
 
 // Initialize isBooted to true if crawler, effectively skipping the intro
-const isBooted = ref(isCrawler())
+const isBot = isCrawler();
+const isBooted = ref(isBot);
 const screenRect = ref(null); // Cache for performance
 const activeTabIndex = ref(0);
 const lastActiveContentTab = ref(1); // Default to BUSINESS
@@ -312,7 +313,7 @@ const handleBootSkip = async () => {
 const vfdMode = ref('spectrum'); // Start with canvas for loading bar
 const vfdKnobInfo = ref({ label: '', value: '' });
 // Boot items
-const vfdBootState = ref('loading'); // 'loading', 'ready', 'complete', 'connecting'
+const vfdBootState = ref(isBot ? 'complete' : 'loading'); // 'loading', 'ready', 'complete', 'connecting'
 const vfdStatusText = ref('wait');
 const bootProgress = ref(0);
 
@@ -803,6 +804,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
       <div class="app-container">
         <!-- Fixed Background/Overlays -->
         <BootLoader 
+          v-if="!isBot"
           :is-booted="isBooted" 
           @start="handleBootStart"
           @skip="handleBootSkip"

@@ -237,7 +237,9 @@ onMounted(() => {
       chatStore.nickname = savedNick;
   }
 
-  runBiosSequence();
+  if (!props.isBooted) {
+    runBiosSequence();
+  }
 });
 
 watch(() => props.isBooted, (val) => {
