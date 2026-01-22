@@ -41,7 +41,6 @@ const handleSend = async () => {
     } else {
         await chatStore.addMessage({
             type: 'user',
-            user: chatStore.nickname,
             text
         });
         SoundManager.playTypingSound();
@@ -58,7 +57,7 @@ const handleCommand = (cmd) => {
     if (command === '/me' && parts.length > 1) {
         chatStore.addMessage({
             type: 'action',
-            text: `* ${chatStore.nickname} ${parts.slice(1).join(' ')}`
+            text: `* ${chatStore.chatNickname || chatStore.nickname} ${parts.slice(1).join(' ')}`
         });
     } else if (command === '/topic' && parts.length > 1) {
         chatStore.updateTopic(parts.slice(1).join(' '));
