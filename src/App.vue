@@ -31,7 +31,12 @@ const mouseY = ref(window.innerHeight / 2)
 
 const isCrawler = () => {
   const ua = navigator.userAgent.toLowerCase();
-  return /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|duckduckbot|lighthouse|google page speed|insights|gtmetrix|pingdom|screaming frog/.test(ua);
+  const isBotUserAgent = /googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|duckduckbot|lighthouse|google page speed|insights|gtmetrix|pingdom|screaming frog|google-inspectiontool/.test(ua);
+  
+  // Check for Headless browsers (often used by bots/crawlers)
+  const isHeadless = navigator.webdriver || !!window.navigator.webdriver;
+
+  return isBotUserAgent || isHeadless;
 };
 
 // Initialize isBooted to true if crawler, effectively skipping the intro
