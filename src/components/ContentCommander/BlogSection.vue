@@ -43,6 +43,7 @@ const fetchIndex = async () => {
 };
 
 const postStats = ref({ views: 0, kudos: 0 });
+const showCopyHint = ref(false);
 
 const selectPost = async (id) => {
     if (activePostId.value === id && postContent.value) return;
@@ -113,8 +114,11 @@ const copyLink = async () => {
     
     try {
         await navigator.clipboard.writeText(url);
-        // Visual feedback could be added here
-        alert('LINK COPIED TO CLIPBOARD'); 
+        // Visual feedback
+        showCopyHint.value = true;
+        setTimeout(() => {
+            showCopyHint.value = false;
+        }, 2000);
     } catch (err) {
         console.error('Failed to copy', err);
     }
@@ -201,14 +205,17 @@ onUnmounted(() => {
                             <span class="stat-value">{{ postStats.kudos }}</span>
                         </div>
                     </div>
-                    <div class="stat-item interactive" @click="copyLink">
+                    <div class="stat-item interactive" @click="copyLink" style="position: relative;">
                          <span class="stat-label">SHARE</span>
-                         <span class="stat-icon">🔗</span>
+                         <span class="stat-icon" style="font-size: 1.4rem; line-height: 1;">☍</span>
+                         <Transition name="fade">
+                            <span v-if="showCopyHint" class="copy-hint">COPIED</span>
+                         </Transition>
                     </div>
                 </div>
             </div>
             <div v-else key="empty" class="empty-state">
-                SELECT A TRANSMISSION
+                SELECT A LOG
             </div>
         </Transition>
       </div>
@@ -393,6 +400,23 @@ onUnmounted(() => {
 
 .stat-icon {
     font-size: 1.2rem;
+}
+
+.copy-hint {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-accent);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 2px;
+    margin-top: 5px;
+    letter-spacing: 1px;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 .post-content-wrapper {
