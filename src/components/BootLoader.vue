@@ -5,14 +5,47 @@ import { chatStore } from '../store/chatStore';
 
 const videoRef = ref(null);
 const canvasRef = ref(null);
-const nicknameInputRef = ref(null);
+const cookieChoice = ref('yes'); // 'yes' or 'no'
+const transitionName = ref('slide-next');
+
+const selectCookie = (choice) => {
+    if (choice === cookieChoice.value) return;
+    
+    // yes (0) -> no (1) : Next/Right
+    // no (1) -> yes (0) : Prev/Left
+    if (cookieChoice.value === 'yes' && choice === 'no') {
+        transitionName.value = 'slide-next';
+    } else {
+        transitionName.value = 'slide-prev';
+    }
+
+    cookieChoice.value = choice;
+    SoundManager.playTypingSound();
+};
+
+const confirmCookie = (choice) => {
+    if (choice !== cookieChoice.value) {
+        selectCookie(choice);
+        // Wait for slide animation (approx 400ms) before connecting
+        setTimeout(() => {
+            handleConnect();
+        }, 450);
+    } else {
+        handleConnect();
+    }
+};
+
+const toggleCookie = () => {
+    const newChoice = cookieChoice.value === 'yes' ? 'no' : 'yes';
+    selectCookie(newChoice);
+};
 
 const props = defineProps({
   isBooted: { type: Boolean, default: false }
 });
 const emit = defineEmits(['start', 'progress', 'ready', 'connecting', 'status-update', 'skip']);
 
-const bootStage = ref('bios'); // bios, login, connecting, ready
+const bootStage = ref('bios'); // bios, cookies, connecting, ready
 const bootMessages = ref([]);
 const isConnecting = ref(false);
 let animationFrameId = null;
@@ -26,10 +59,18 @@ const VISUALIZATION_CONFIG = {
     horizontalPadding: 10
 };
 
-const isValidNickname = computed(() => {
-    const n = chatStore.nickname.trim();
-    return n.length >= 3;
-});
+const handleCookieKeydown = (e) => {
+    if (bootStage.value !== 'cookies') return;
+    
+    if (e.key === 'ArrowRight' || e.key === 'Right') {
+        selectCookie('no');
+    } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
+        selectCookie('yes');
+    } else if (e.key === 'Enter') {
+        SoundManager.playTypingSound();
+        handleConnect();
+    }
+};
 
 const parseMessage = (text) => {
     // Regex to split by chunks of special characters: > or █ or ✔
@@ -90,18 +131,26 @@ const runBiosSequence = async () => {
     emit('progress', 100);
     emit('ready'); // VFD is now ready for interaction
     
-    bootStage.value = 'login';
-    await nextTick();
-    nicknameInputRef.value?.focus();
+    bootStage.value = 'cookies';
+    window.addEventListener('keydown', handleCookieKeydown);
 };
 
 const handleConnect = async () => {
-    if (!isValidNickname.value || isConnecting.value) return;
+    if (isConnecting.value) return;
     
-    // Generate guest name if empty
-    if (chatStore.nickname.trim() === '') {
+    // Remove listener
+    window.removeEventListener('keydown', handleCookieKeydown);
+    
+    // Auto-generate nickname since we don't ask
+    if (!chatStore.nickname || chatStore.nickname.trim() === '') {
         const rand = Math.floor(1000 + Math.random() * 9000);
         chatStore.nickname = `guest-${rand}`;
+    }
+
+    if (cookieChoice.value === 'no') {
+       // Minimal boot if declined (skips visualization)
+       handleSkip(); 
+       return;
     }
 
     isConnecting.value = true;
@@ -160,11 +209,17 @@ const handleConnect = async () => {
 };
 
 const handleSkip = () => {
+    window.removeEventListener('keydown', handleCookieKeydown);
     emit('skip');
 };
 
-const startVisualization = () => {
-    if (!canvasRef.value) return;
+const startVisualization = (retries = 0) => {
+    if (!canvasRef.value) {
+        if (retries < 5) {
+            setTimeout(() => startVisualization(retries + 1), 50);
+        }
+        return;
+    }
     const canvas = canvasRef.value;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -252,6 +307,7 @@ watch(() => props.isBooted, (val) => {
 
 onUnmounted(() => {
   stopVisualization();
+  window.removeEventListener('keydown', handleCookieKeydown);
 });
 </script>
 
@@ -276,41 +332,39 @@ onUnmounted(() => {
           
           <!-- Dial-Up Popup -->
           <transition name="fade">
-            <div v-if="bootStage === 'login' || bootStage === 'connecting'" class="popup-overlay">
+            <div v-if="bootStage === 'cookies' || bootStage === 'connecting'" class="popup-overlay">
               <div class="popup-header">
-                  <span>REMOTE NODE LINK</span>
-                  <div class="esc-label" @click="handleSkip">ESC</div>
+                <span>REMOTE NODE LINK</span>
+                <div class="esc-label" @click="handleSkip">ESC</div>
               </div>
               <div class="popup-body">
-                <template v-if="bootStage === 'login'">
-                    <p>PLEASE IDENTIFY YOUR TERMINAL NODE TO INITIALIZE SYNC.</p>
-                    <div class="input-group">
-                        <span class="prompt">NICKNAME:</span>
-                        <div class="input-wrapper">
-                            <input 
-                                ref="nicknameInputRef"
-                                v-model="chatStore.nickname" 
-                                type="text" 
-                                maxlength="12"
-                                @keyup.enter="handleConnect"
-                            />
+                <transition name="fade" mode="out-in">
+                    <div v-if="bootStage === 'cookies'" class="cookies-container" key="cookies">
+                        <p>WATCH INTRO?</p>
+                        
+                        <div class="cookie-select-container">
+                            <div 
+                                class="highlight-block" 
+                                :class="[cookieChoice === 'yes' ? 'left' : 'right']"
+                            ></div>
+                            <div 
+                                class="cookie-option" 
+                                :class="{ 'active-text': cookieChoice === 'yes' }"
+                                @click="confirmCookie('yes')"
+                            >YES</div>
+                            <div 
+                                class="cookie-option" 
+                                :class="{ 'active-text': cookieChoice === 'no' }"
+                                @click="confirmCookie('no')"
+                            >NO</div>
                         </div>
                     </div>
-                    <button 
-                        class="connect-btn" 
-                        :disabled="!isValidNickname"
-                        @click="handleConnect"
-                    >
-                        [ CONNECT ]
-                    </button>
-                </template>
 
-                <template v-else-if="bootStage === 'connecting'">
-                    <div class="connection-status">
+                    <div v-else-if="bootStage === 'connecting'" class="connection-status" key="connecting">
                       <canvas ref="canvasRef" width="300" height="60" class="viz-canvas"></canvas>
                       <div class="dialing-text">ESTABLISHING HANDSHAKE...</div>
                     </div>
-                </template>
+                </transition>
               </div>
             </div>
           </transition>
@@ -529,5 +583,74 @@ onUnmounted(() => {
     .popup-overlay {
         width: 90%;
     }
+}
+
+/* Side-by-Side Cookie Selection */
+.cookie-select-container {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 15px;
+    padding: 2px;
+    background: rgba(0,0,0,0.5);
+    height: 40px; /* Fixed height for the block calculation */
+    width: 200px; /* Fixed width for the block calculation */
+}
+
+.highlight-block {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    width: 40%;
+    background: var(--color-accent);
+    /* "Crazy" Elastic: Big wind-up (-0.8) and big overshoot (1.9) */
+    transition: left 0.4s cubic-bezier(0.5, -0.8, 0.5, 1.9), transform 0.3s ease-in-out, border-radius 0.3s ease;
+    z-index: 1;
+    box-shadow: 0 0 10px rgba(64, 224, 208, 0.5);
+    animation: glitch-jitter 4s infinite;
+}
+
+/* Position block based on choice */
+.highlight-block.left {
+    left: 5%;
+    transform: skewX(-10deg);
+    border-radius: 3px 6px 4px 2px; /* Square-ish but imperfect */
+}
+.highlight-block.right {
+    left: 55%;
+    transform: skewX(10deg);
+    border-radius: 6px 3px 2px 5px; /* Square-ish but imperfect */
+}
+
+@keyframes glitch-jitter {
+    0%, 92% { clip-path: inset(0 0 0 0); opacity: 1; }
+    93% { clip-path: inset(10% 0 30% 0); opacity: 0.8; }
+    95% { clip-path: inset(40% 0 10% 0); opacity: 1; }
+    98% { clip-path: inset(0 0 50% 0); opacity: 0.9; }
+    100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+.cookie-option {
+    position: relative;
+    z-index: 2;
+    flex: 1; /* Each takes 50% */
+    text-align: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--color-accent);
+    transition: color 0.3s ease;
+    user-select: none;
+    line-height: 36px; /* Center vertically in 40px container (minus padding) */
+}
+
+/* Invert text color when active */
+.cookie-option.active-text {
+    color: #000;
+}
+
+.arrow-indicator {
+    display: none; /* Hide arrows in this mode */
 }
 </style>
