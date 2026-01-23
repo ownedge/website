@@ -123,11 +123,7 @@ onMounted(() => {
                 <h1 class="post-title">{{ selectedPost.title }}</h1>
                 <div class="divider">------------------------------------------------------------</div>
                 
-                <div class="post-content">
-                    <p v-for="(para, i) in selectedPost.content.split('\n\n')" :key="i">
-                        {{ para }}
-                    </p>
-                </div>
+                <div class="post-content" v-html="selectedPost.content"></div>
                 
                 <div class="detail-footer">
                     <button class="kudos-btn" @click="giveKudos(selectedPost.id)">

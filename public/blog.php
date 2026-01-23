@@ -26,7 +26,6 @@ if (!file_exists($data_file)) {
             'title' => 'THE INDEPENDENT WEB',
             'date' => '2025-05-12T14:00:00Z',
             'summary' => 'Why we build strange things in a standardized world.',
-            'content' => "The modern web has become flattened. Templates, frameworks, and design systems have streamlined production but eroded character.\n\nOwnedge is an experiment in reclaiming the digital texture. We believe interfaces should feel like *places*, not just documents. They should have atmosphere, sound, and friction.\n\nEfficiency is for machines. Experience is for humans.",
             'views' => 1240,
             'kudos' => 42
         ],
@@ -35,27 +34,8 @@ if (!file_exists($data_file)) {
             'title' => 'TERMINAL AESTHETICS',
             'date' => '2025-06-20T09:30:00Z',
             'summary' => 'Exploring the enduring appeal of the command line.',
-            'content' => "Green phosphor. Blinking cursors. The silence of the void.\n\nThere is a specific comfort in the terminal. It promises direct control. It hides nothing, yet reveals only what you ask for.\n\nIn building this site, we wanted to capture that feeling of being a 'user' in the TRON sense—someone with agency, operating a machine, rather than a consumer scrolling a feed.",
             'views' => 890,
             'kudos' => 28
-        ],
-        [
-            'id' => 'signal-noise',
-            'title' => 'SIGNAL / NOISE',
-            'date' => '2025-08-15T18:45:00Z',
-            'summary' => 'Filtering reality through digital artifacts.',
-            'content' => "We added glitch effects not just for style, but as a reminder of the medium's fragility.\n\nA pure signal is an illusion. Every transmission degrades. Each packet loss tells a story of distance and latency.\n\nEmbrace the noise.",
-            'views' => 450,
-            'kudos' => 15
-        ]
-        [
-            'id' => 'hello-world',
-            'title' => 'HELLO WORLD',
-            'date' => '2025-09-01T12:00:00Z',
-            'summary' => 'Just a test post to verify system integrity.',
-            'content' => "This is a dummy entry.\n\nTesting the blog system capabilities including:\n- Line breaks\n- Content rendering\n- Stats tracking\n\nEnd of transmission.",
-            'views' => 1,
-            'kudos' => 0
         ]
     ];
     file_put_contents($data_file, json_encode($seed));
@@ -78,6 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $p['views']++;
                 $save_needed = true;
                 
+                // Load Content from HTML file
+                $htmlFile = __DIR__ . "/blog/{$id}.html";
+                if (file_exists($htmlFile)) {
+                    $p['content'] = file_get_contents($htmlFile);
+                } else {
+                    $p['content'] = "<p>DATA CORRUPTED. CONTENT NOT FOUND ON DISK.</p>";
+                }
+                
                 if ($save_needed) file_put_contents($data_file, json_encode($posts), LOCK_EX);
                 echo json_encode($p);
                 exit;
@@ -86,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         http_response_code(404);
         echo json_encode(["error" => "Post not found"]);
     } else {
-        // Return List (Summary only usually, but full is fine for small blog)
+        // Return List (Summary only)
         // Sort by date desc
         usort($posts, function($a, $b) {
             return strtotime($b['date']) - strtotime($a['date']);
