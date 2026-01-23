@@ -5,27 +5,27 @@ import { chatStore } from '../store/chatStore';
 
 const videoRef = ref(null);
 const canvasRef = ref(null);
-const cookieChoice = ref('yes'); // 'yes' or 'no'
+const introChoice = ref('yes'); // 'yes' or 'no'
 const transitionName = ref('slide-next');
 
-const selectCookie = (choice) => {
-    if (choice === cookieChoice.value) return;
+const selectIntroOption = (choice) => {
+    if (choice === introChoice.value) return;
     
     // yes (0) -> no (1) : Next/Right
     // no (1) -> yes (0) : Prev/Left
-    if (cookieChoice.value === 'yes' && choice === 'no') {
+    if (introChoice.value === 'yes' && choice === 'no') {
         transitionName.value = 'slide-next';
     } else {
         transitionName.value = 'slide-prev';
     }
 
-    cookieChoice.value = choice;
+    introChoice.value = choice;
     SoundManager.playTypingSound();
 };
 
-const confirmCookie = (choice) => {
-    if (choice !== cookieChoice.value) {
-        selectCookie(choice);
+const confirmIntroOption = (choice) => {
+    if (choice !== introChoice.value) {
+        selectIntroOption(choice);
         // Wait for slide animation (approx 400ms) before connecting
         setTimeout(() => {
             handleConnect();
@@ -35,9 +35,9 @@ const confirmCookie = (choice) => {
     }
 };
 
-const toggleCookie = () => {
-    const newChoice = cookieChoice.value === 'yes' ? 'no' : 'yes';
-    selectCookie(newChoice);
+const toggleIntroOption = () => {
+    const newChoice = introChoice.value === 'yes' ? 'no' : 'yes';
+    selectIntroOption(newChoice);
 };
 
 const props = defineProps({
@@ -45,7 +45,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['start', 'progress', 'ready', 'connecting', 'status-update', 'skip']);
 
-const bootStage = ref('bios'); // bios, cookies, connecting, ready
+const bootStage = ref('bios'); // bios, intro, connecting, ready
 const bootMessages = ref([]);
 const isConnecting = ref(false);
 let animationFrameId = null;
@@ -59,13 +59,13 @@ const VISUALIZATION_CONFIG = {
     horizontalPadding: 10
 };
 
-const handleCookieKeydown = (e) => {
-    if (bootStage.value !== 'cookies') return;
+const handleIntroKeydown = (e) => {
+    if (props.isBooted || bootStage.value !== 'intro') return;
     
     if (e.key === 'ArrowRight' || e.key === 'Right') {
-        selectCookie('no');
+        selectIntroOption('no');
     } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
-        selectCookie('yes');
+        selectIntroOption('yes');
     } else if (e.key === 'Enter') {
         SoundManager.playTypingSound();
         handleConnect();
@@ -131,15 +131,15 @@ const runBiosSequence = async () => {
     emit('progress', 100);
     emit('ready'); // VFD is now ready for interaction
     
-    bootStage.value = 'cookies';
-    window.addEventListener('keydown', handleCookieKeydown);
+    bootStage.value = 'intro';
+    window.addEventListener('keydown', handleIntroKeydown);
 };
 
 const handleConnect = async () => {
     if (isConnecting.value) return;
     
     // Remove listener
-    window.removeEventListener('keydown', handleCookieKeydown);
+    window.removeEventListener('keydown', handleIntroKeydown);
     
     // Auto-generate nickname since we don't ask
     if (!chatStore.nickname || chatStore.nickname.trim() === '') {
@@ -147,7 +147,7 @@ const handleConnect = async () => {
         chatStore.nickname = `guest-${rand}`;
     }
 
-    if (cookieChoice.value === 'no') {
+    if (introChoice.value === 'no') {
        // Minimal boot if declined (skips visualization)
        handleSkip(); 
        return;
@@ -209,7 +209,7 @@ const handleConnect = async () => {
 };
 
 const handleSkip = () => {
-    window.removeEventListener('keydown', handleCookieKeydown);
+    window.removeEventListener('keydown', handleIntroKeydown);
     emit('skip');
 };
 
@@ -307,7 +307,7 @@ watch(() => props.isBooted, (val) => {
 
 onUnmounted(() => {
   stopVisualization();
-  window.removeEventListener('keydown', handleCookieKeydown);
+  window.removeEventListener('keydown', handleIntroKeydown);
 });
 </script>
 
@@ -330,32 +330,32 @@ onUnmounted(() => {
             >{{ segment.text }}</span>
           </div>
           
-          <!-- Dial-Up Popup -->
+            <!-- Dial-Up Popup -->
           <transition name="fade">
-            <div v-if="bootStage === 'cookies' || bootStage === 'connecting'" class="popup-overlay">
+            <div v-if="bootStage === 'intro' || bootStage === 'connecting'" class="popup-overlay">
               <div class="popup-header">
                 <span>REMOTE NODE LINK</span>
                 <div class="esc-label" @click="handleSkip">ESC</div>
               </div>
               <div class="popup-body">
                 <transition name="fade" mode="out-in">
-                    <div v-if="bootStage === 'cookies'" class="cookies-container" key="cookies">
+                    <div v-if="bootStage === 'intro'" class="cookies-container" key="intro">
                         <p>WATCH INTRO?</p>
                         
                         <div class="cookie-select-container">
                             <div 
                                 class="highlight-block" 
-                                :class="[cookieChoice === 'yes' ? 'left' : 'right']"
+                                :class="[introChoice === 'yes' ? 'left' : 'right']"
                             ></div>
                             <div 
                                 class="cookie-option" 
-                                :class="{ 'active-text': cookieChoice === 'yes' }"
-                                @click="confirmCookie('yes')"
+                                :class="{ 'active-text': introChoice === 'yes' }"
+                                @click="confirmIntroOption('yes')"
                             >YES</div>
                             <div 
                                 class="cookie-option" 
-                                :class="{ 'active-text': cookieChoice === 'no' }"
-                                @click="confirmCookie('no')"
+                                :class="{ 'active-text': introChoice === 'no' }"
+                                @click="confirmIntroOption('no')"
                             >NO</div>
                         </div>
                     </div>
@@ -498,6 +498,15 @@ onUnmounted(() => {
     background: #111;
     padding: 8px 12px;
     border: 1px solid #333;
+}
+
+.cookies-container,
+.connection-status {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
 .input-wrapper {
