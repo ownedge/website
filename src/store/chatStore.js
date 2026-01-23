@@ -7,6 +7,8 @@ export const chatStore = reactive({
     chatNickname: null, // The actual unique nickname used on the network
     isConnected: false,
     showPopup: true,
+    userLat: null,
+    userLon: null,
     messages: [],
     users: [],
     pollingInterval: null,
@@ -30,8 +32,7 @@ export const chatStore = reactive({
             let suffix = 2;
             
             // Check case-insensitive against ALL online users
-            // Use this.users directly because we passed false above
-            while (this.users.some(u => u.toLowerCase() === candidate.toLowerCase())) {
+            while (this.users.some(u => u.nickname.toLowerCase() === candidate.toLowerCase())) {
                 candidate = `${base}${suffix}`;
                 suffix++;
             }
@@ -55,6 +56,35 @@ export const chatStore = reactive({
         ]);
         this.startPolling();
     },
+
+    // ... (fetchTopic, updateTopic catchup if simplified, but I'll skip to fetchUsers) ...
+    // Note: I can't skip lines easily with replace_file_content if they aren't contiguous context.
+    // I will target the Blocks I need.
+    // Actually, init is contiguous with state definition at top.
+    // fetchUsers is further down.
+    // I will break this into 2 edits or use replace_file_content carefully.
+    // Let's do STATE + INIT first.
+    
+    // ... wait, I'll use separate replacementChunks if using multi_replace?
+    // The tool is `replace_file_content` (single block). I should use `multi_replace_file_content` if needed.
+    // Agent has `multi_replace_file_content`.
+    // I will use `replace_file_content` for the whole file? No, risky.
+    // I will use `multi_replace_file_content`.
+
+    // First Chunk: State + Init (Start of file)
+    // Second Chunk: fetchUsers + sendHeartbeat (Middle)
+    // Third Chunk: changeNickname (End)
+    
+    // Wait, let me look at `fetchTopic` position.
+    // Lines 59-77.
+    // `state` is 6-17.
+    // `init` is 18-57.
+    // `fetchUsers` is 123-146.
+    // `sendHeartbeat` is 148-158.
+    // `changeNickname` is 275-318.
+    
+    // I'll use multi_replace.
+
 
     async fetchTopic() {
         try {
@@ -126,19 +156,25 @@ export const chatStore = reactive({
             if (response.ok) {
                 const data = await response.json();
                 if (Array.isArray(data)) {
+                    // Normalize to objects
+                    const normalized = data.map(u => {
+                        if (typeof u === 'string') return { nickname: u, lat: null, lon: null };
+                        return u; 
+                    });
+
                     if (filterSelf) {
                         // Filter out our OWN nickname (whether preferred or effective)
                         const myNick = this.chatNickname || this.nickname;
-                        this.users = data.filter(u => u !== myNick);
+                        this.users = normalized.filter(u => u.nickname !== myNick);
                     } else {
-                        this.users = data;
+                        this.users = normalized;
                     }
                 } else {
                     console.error("fetchUsers: Expected array, got:", data);
                 }
             } else {
                 const body = await response.text();
-                console.error(`fetchUsers Failed (${response.status}):`, body);
+                // console.error(`fetchUsers Failed (${response.status}):`, body);
             }
         } catch (e) {
             console.error("fetchUsers Error:", e);
@@ -148,11 +184,16 @@ export const chatStore = reactive({
     async sendHeartbeat() {
         if (!this.isConnected || !this.nickname) return;
         const activeNick = this.chatNickname || this.nickname;
+        
+        const payload = { nickname: activeNick };
+        if (this.userLat) payload.lat = this.userLat;
+        if (this.userLon) payload.lon = this.userLon;
+
         try {
             await fetch(`${API_BASE}?action=presence`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nickname: activeNick })
+                body: JSON.stringify(payload)
             });
         } catch (e) {}
     },
@@ -296,7 +337,7 @@ export const chatStore = reactive({
         await this.fetchUsers(false);
         let candidate = cleanNick;
         let suffix = 2;
-        while (this.users.some(u => u.toLowerCase() === candidate.toLowerCase())) {
+        while (this.users.some(u => u.nickname.toLowerCase() === candidate.toLowerCase())) {
             candidate = `${cleanNick}${suffix}`;
             suffix++;
         }

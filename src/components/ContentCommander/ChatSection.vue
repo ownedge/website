@@ -86,17 +86,197 @@ watch(() => chatStore.messages, () => {
     scrollToBottom();
 }, { deep: true });
 
+import mapPng from '../../assets/geo_map.png';
+
+const mapCanvas = ref(null);
+let mapPoints = [];
+let animationId = null;
+
+const initMap = () => {
+    const img = new Image();
+    img.src = mapPng;
+    img.onload = () => {
+        const offCanvas = document.createElement('canvas');
+        const ctx = offCanvas.getContext('2d');
+        // High density scan
+        const width = 480; 
+        const height = 100;
+        offCanvas.width = width;
+        offCanvas.height = height;
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        const imgData = ctx.getImageData(0, 0, width, height).data;
+        
+        mapPoints = [];
+        // Scan every pixel for maximum density
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = (y * width + x) * 4;
+                const r = imgData[index];
+                const g = imgData[index + 1];
+                const b = imgData[index + 2];
+                const a = imgData[index + 3];
+                
+                if (a > 100 && (r + g + b) > 150) {
+                    mapPoints.push({
+                        x: x / width,
+                        y: y / height,
+                        waveOffset: (x / width) * 10 
+                    });
+                }
+            }
+        }
+        startMapAnimation();
+    };
+    img.onerror = (e) => {
+        console.error("Failed to load map image", e);
+    };
+};
+
+const startMapAnimation = () => {
+    if (!mapCanvas.value) return;
+    const canvas = mapCanvas.value;
+    const ctx = canvas.getContext('2d');
+    
+    // Get accent color
+    const computedStyle = getComputedStyle(document.body);
+    const accentColor = computedStyle.getPropertyValue('--color-accent').trim() || '#40e0d0'; // Fallback
+    
+    const draw = (time) => {
+        if (!canvas.isConnected) return; // Stop if unmounted
+        
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const physicalWidth = rect.width * dpr;
+        const physicalHeight = rect.height * dpr;
+
+        // Resize check handling DPR
+        if (canvas.width !== physicalWidth || canvas.height !== physicalHeight) {
+            canvas.width = physicalWidth;
+            canvas.height = physicalHeight;
+        }
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = accentColor;
+        
+        // Preserve 2:1 Aspect Ratio
+        const targetRatio = 2.0; 
+        const canvasRatio = canvas.width / canvas.height;
+        
+        let mapW, mapH;
+        
+        if (canvasRatio > targetRatio) {
+            // Canvas is wider than map -> constrain by height
+            mapH = canvas.height;
+            mapW = mapH * targetRatio;
+        } else {
+            // Canvas is narrower -> constrain by width
+            mapW = canvas.width;
+            mapH = mapW / targetRatio;
+        }
+        
+        const offsetX = (canvas.width - mapW) / 2;
+        const offsetY = (canvas.height - mapH) / 2;
+        
+        mapPoints.forEach(p => {
+            const x = (p.x * mapW) + offsetX;
+            const y = (p.y * mapH) + offsetY;
+            
+            // Uniform opacity (no gradient/pulse)
+            ctx.globalAlpha = 0.25;
+            
+            ctx.beginPath();
+            // High res scale
+            const size = Math.max(0.5 * dpr, mapW / 1800);
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // Draw Connected Users
+        const usersToPlot = [];
+        
+        // Me
+        if (chatStore.userLat && chatStore.userLon) {
+             usersToPlot.push({ lat: chatStore.userLat, lon: chatStore.userLon, isMe: true });
+        }
+
+        // Others
+        if (chatStore.users) {
+            chatStore.users.forEach(u => {
+                if (u.lat && u.lon) {
+                    // Use real location from server
+                    usersToPlot.push({ lat: u.lat, lon: u.lon, isMe: false });
+                } else {
+                    // Fallback: Pseudo-random locations based on nick hash
+                    let hash = 0;
+                    const nick = u.nickname || 'Guest';
+                    for (let i = 0; i < nick.length; i++) hash = nick.charCodeAt(i) + ((hash << 5) - hash);
+                    // Lat: -60 to 75. Lon: -180 to 180.
+                    const lat = (Math.abs(hash) % 135) - 60;
+                    const lon = (Math.abs(hash * 31) % 360) - 180;
+                    usersToPlot.push({ lat, lon, isMe: false });
+                }
+            });
+        }
+
+        usersToPlot.forEach(u => {
+             // Mercator Projection: Matches standard web maps better
+             // Clamp lat to -85 to 85 to avoid infinity
+             const safeLat = Math.max(-85, Math.min(85, u.lat));
+             const latRad = safeLat * Math.PI / 180;
+             const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
+             // Map mercN (-PI to PI) to 0..1
+             const uY = (0.5 - (mercN / (2 * Math.PI))) * mapH + offsetY;
+             
+             const uX = ((u.lon + 180) / 360) * mapW + offsetX;
+             
+             // Draw Dot
+             ctx.fillStyle = '#fff'; // Bright white center
+             ctx.globalAlpha = 1.0;
+             ctx.beginPath();
+             const dotSize = Math.max(1.5 * dpr, mapW / 200); // Prominent dot
+             ctx.arc(uX, uY, dotSize * 0.6, 0, Math.PI * 2);
+             ctx.fill();
+             
+             // Glow
+             ctx.fillStyle = accentColor;
+             ctx.globalAlpha = 0.5;
+             ctx.beginPath();
+             ctx.arc(uX, uY, dotSize, 0, Math.PI * 2);
+             ctx.fill();
+
+             // Draw PING Ring
+             ctx.strokeStyle = accentColor;
+             ctx.lineWidth = 1 * dpr;
+             // Varies slightly per user to desync
+             const offset = u.lon * 10; 
+             const ringPulse = ((time + offset) % 3000) / 3000; 
+             const maxRing = dotSize * 8;
+             
+             ctx.globalAlpha = Math.max(0, 1 - ringPulse); 
+             ctx.beginPath();
+             ctx.arc(uX, uY, dotSize + (maxRing * ringPulse), 0, Math.PI * 2);
+             ctx.stroke(); 
+        });
+        
+        animationId = requestAnimationFrame(draw);
+    };
+    animationId = requestAnimationFrame(draw);
+};
+
 onMounted(() => {
     if (chatStore.isConnected) {
         chatStore.startPolling();
         scrollToBottom();
-        // Small delay ensures users manually cycling past the tab with arrows don't get trapped in the input
         setTimeout(focusInput, 500);
+        
+        // Initialize Map
+        initMap();
     }
 });
 
 onUnmounted(() => {
-// Polling remains active globally for background sync
+    if (animationId) cancelAnimationFrame(animationId);
 });
 
 const formatTime = (isoString) => {
@@ -117,6 +297,7 @@ const formatTime = (isoString) => {
     <!-- IRC Interface -->
     <div v-if="chatStore.isConnected" class="irc-container">
       <div class="irc-main">
+        <canvas ref="mapCanvas" class="map-bg"></canvas>
         <div class="irc-header">
           <div class="header-main">
             <span class="chan">#OWNEDGE</span>
@@ -157,7 +338,7 @@ const formatTime = (isoString) => {
         <div class="sidebar-header">USERS [{{ chatStore.users.length + 1 }}]</div>
         <div class="user-list">
           <div class="user-item self">{{ chatStore.chatNickname || chatStore.nickname }}</div>
-          <div v-for="u in chatStore.users" :key="u" class="user-item">{{ u }}</div>
+          <div v-for="u in chatStore.users" :key="u.nickname" class="user-item">{{ u.nickname }}</div>
         </div>
       </div>
     </div>
@@ -201,6 +382,18 @@ const formatTime = (isoString) => {
     border-right: 1px solid #333;
     min-height: 0; /* CRITICAL: Allow flex item to shrink below content height */
     height: 100%; /* Force it to fill the irc-container grid cell */
+    position: relative;
+    overflow: hidden;
+}
+
+.map-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .irc-header {
@@ -211,6 +404,8 @@ const formatTime = (isoString) => {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    position: relative;
+    z-index: 1;
 }
 
 .header-main {
@@ -238,6 +433,8 @@ const formatTime = (isoString) => {
     font-size: 0.9rem;
     scrollbar-width: thin;
     scrollbar-color: #333 transparent;
+    position: relative;
+    z-index: 1;
 }
 
 .msg { margin-bottom: 6px; line-height: 1.5; display: flex; gap: 8px; }
@@ -255,6 +452,8 @@ const formatTime = (isoString) => {
     background: #0a0a0a;
     border-top: 1px solid #222;
     gap: 12px;
+    position: relative;
+    z-index: 1;
 }
 
 .input-wrapper {

@@ -189,8 +189,8 @@ const addMessage = (text, delay = 0) => {
 const fetchGeoInfo = async () => {
     try {
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 2000); // 2s timeout
-        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        const id = setTimeout(() => controller.abort(), 3000); // 3s timeout
+        const res = await fetch('https://ipwho.is/', { signal: controller.signal });
         clearTimeout(id);
         if (!res.ok) throw new Error('API Error');
         return await res.json();
@@ -251,6 +251,8 @@ const runBiosSequence = async () => {
         // Store in chatStore for later use
         chatStore.userIp = geoData.ip;
         chatStore.userLocation = locDisplay;
+        chatStore.userLat = geoData.latitude;
+        chatStore.userLon = geoData.longitude;
     }
     
     await addMessage(`> IP ADDRESS: ${ipDisplay}`, 100);

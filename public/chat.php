@@ -50,7 +50,9 @@ if ($lock_fp && flock($lock_fp, LOCK_EX | LOCK_NB)) { // Non-blocking lock
     $changed_msgs = false;
 
     // 1. Prune Users (Timeout)
-    foreach ($users as $nick => $lastSeen) {
+    foreach ($users as $nick => $data) {
+        $lastSeen = is_array($data) ? ($data['seen'] ?? 0) : $data;
+        
         if ($now_ts - $lastSeen > 45) { // 45 second timeout
             $messages[] = [
                 'id' => sprintf("%.4f", microtime(true)) . rand(100, 999),
@@ -234,7 +236,12 @@ if ($action === 'presence' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             @mail($admin_email, $subject, $body, $headers);
         }
 
-        $users[$nick] = time();
+        $userData = is_array($users[$nick] ?? null) ? $users[$nick] : ['seen' => 0];
+        $userData['seen'] = time();
+        if (isset($data['lat'])) $userData['lat'] = $data['lat'];
+        if (isset($data['lon'])) $userData['lon'] = $data['lon'];
+        
+        $users[$nick] = $userData;
         save_data($users_file, $users);
         echo json_encode(["status" => "ok"]);
         exit;
@@ -264,7 +271,16 @@ if ($action === 'leave' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($action === 'users') {
-    echo json_encode(array_values(array_keys($users)));
+    $list = [];
+    foreach ($users as $nick => $data) {
+        $entry = ['nickname' => $nick];
+        if (is_array($data)) {
+            if (isset($data['lat'])) $entry['lat'] = $data['lat'];
+            if (isset($data['lon'])) $entry['lon'] = $data['lon'];
+        }
+        $list[] = $entry;
+    }
+    echo json_encode($list);
     exit;
 }
 
