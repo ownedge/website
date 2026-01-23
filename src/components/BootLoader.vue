@@ -188,7 +188,7 @@ const addMessage = (text, delay = 0) => {
 
 const runBiosSequence = async () => {
     emit('progress', 0);
-    await addMessage('> BIOS VERSION 4.2.0 (C) 1994 OWNEDGE CORP', 500);
+    await addMessage('> BIOS VERSION 4.2.Ø (C) 2011 OWNEDGE CORP', 500);
     emit('progress', 10);
     const memLineIdx = bootMessages.value.length;
     bootMessages.value.push(''); 
@@ -203,7 +203,7 @@ const runBiosSequence = async () => {
     emit('progress', 20);
     await addMessage('> DETECTING PRIMARY MASTER... OWNEDGE-CORE-V1', 400);
     emit('progress', 30);
-    await addMessage('> DRIVE 0: MOUNTING CORE_OS... ✔', 200);
+    await addMessage('> DRIVE Ø: MOUNTING CORE_OS... ✔', 200);
     
     // Animate Kernel Loading Bar
     const barLineIdx = bootMessages.value.length;
