@@ -23,8 +23,12 @@ const fetchIndex = async () => {
                 // Priority: Query Param > Session Storage > First Post
                 let targetId = posts.value[0].id;
 
-                if (queryId && posts.value.find(p => p.id === queryId)) {
-                    targetId = queryId;
+                if (queryId) {
+                    if (posts.value.find(p => p.id === queryId)) {
+                        targetId = queryId;
+                    } else {
+                        console.warn(`Deep link post "${queryId}" not found in index.`);
+                    }
                 } else {
                     const savedId = sessionStorage.getItem('last_blog_post_id');
                     if (savedId && posts.value.find(p => p.id === savedId)) {
