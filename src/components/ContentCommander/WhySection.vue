@@ -4,7 +4,7 @@
     
     <div class="manifesto-wrapper">
       <div class="manifesto-content">
-        <p class="highlight">Ownedge was created from a simple idea: that the most meaningful work happens when you care deeply about what you build — and when you choose to stand behind it.</p>
+        <p class="highlight">Ownedge was born from a simple idea: that the most meaningful work happens when you care deeply about what you build — and when you choose to stand behind it.</p>
         
         <p>We live in a world full of fast launches, disposable products, and short-term thinking. Ownedge exists as a quiet counterweight to that. It is a place to build deliberately and with craftsmanship — whether that means software, infrastructure, products, or real-world assets.</p>
         
