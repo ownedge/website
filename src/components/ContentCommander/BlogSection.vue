@@ -400,6 +400,7 @@ onUnmounted(() => {
 
 .stat-icon {
     font-size: 1.2rem;
+    color: var(--color-accent);
 }
 
 .copy-hint {
