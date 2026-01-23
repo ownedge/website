@@ -562,6 +562,10 @@ const updateUrlFromIndex = (index) => {
     }
 };
 
+const initialBlogPostId = ref(null);
+import { provide } from 'vue';
+provide('initialBlogPostId', initialBlogPostId);
+
 const updateIndexFromUrl = () => {
     // Normalize path by removing trailing slash if exists (e.g. /chat/ -> /chat)
     let path = window.location.pathname;
@@ -569,9 +573,29 @@ const updateIndexFromUrl = () => {
         path = path.slice(0, -1);
     }
     
+    // Check for standard route map
     const index = routeMap[path];
-    if (index !== undefined && index !== activeTabIndex.value) {
-        handleTabSelect(index);
+    if (index !== undefined) {
+        if (index !== activeTabIndex.value) {
+            handleTabSelect(index);
+        }
+        return;
+    }
+
+    // Check for Blog Deep Link (e.g. /blog/my-post)
+    if (path.startsWith('/blog/')) {
+        const parts = path.split('/');
+        // path is like /blog/my-post or /blog/my-post/
+        // parts: ['', 'blog', 'my-post']
+        if (parts.length >= 3) {
+            const blogId = parts[2];
+            if (blogId) {
+                initialBlogPostId.value = blogId; // Provide to BlogSection
+                handleTabSelect(3); // Blog Tab Index
+                // Do NOT call history.pushState here, we want to keep the current detailed URL
+                return;
+            }
+        }
     }
 };
 

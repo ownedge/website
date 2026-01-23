@@ -150,11 +150,15 @@ routes.forEach(route => {
     console.log(`Generated static route: /${route}/index.html with metadata`);
 });
 
-// Scan for blog posts to include in sitemap
+// Scan for blog posts to include in sitemap and generate directories
 const blogDir = path.join(__dirname, 'public/blog');
 const blogPosts = [];
 if (fs.existsSync(blogDir)) {
     const files = fs.readdirSync(blogDir).filter(f => f.endsWith('.html'));
+    
+    // Ensure clean /blog/ directory for generating sub-posts
+    // (Note: /blog/index.html is already handled by routes array)
+
     files.forEach(file => {
         const content = fs.readFileSync(path.join(blogDir, file), 'utf8');
         const match = content.match(/<!--\s*::metadata::(.*?)::\/metadata::\s*-->/s);
@@ -170,6 +174,31 @@ if (fs.existsSync(blogDir)) {
             });
             if (meta.id && meta.date) {
                 blogPosts.push({ id: meta.id, date: meta.date });
+
+                // Generate static directory for this post
+                const postDir = path.join(distPath, 'blog', meta.id);
+                if (!fs.existsSync(postDir)) {
+                    fs.mkdirSync(postDir, { recursive: true });
+                }
+
+                // Inject specific metadata for this post
+                let postHtml = indexContent;
+                postHtml = postHtml.replace(/<title>.*?<\/title>/, `<title>Ownedge | ${meta.title}</title>`);
+                postHtml = postHtml.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${meta.summary || meta.title}" />`);
+                
+                // Open Graph specific to post
+                postHtml = postHtml.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${meta.title}" />`);
+                postHtml = postHtml.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${meta.summary || meta.title}" />`);
+                postHtml = postHtml.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://ownedge.com/blog/${meta.id}" />`);
+                postHtml = postHtml.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="https://ownedge.com/blog/${meta.id}" />`);
+                
+                // TODO: Inject actual post content into fallback? 
+                // For now, allow Vue loop to handle rendering on mount.
+                // But providing the Vue shell with correct Meta is already a huge win.
+
+                // Write index.html
+                fs.writeFileSync(path.join(postDir, 'index.html'), postHtml);
+                console.log(`Generated blog route: /blog/${meta.id}/index.html`);
             }
         }
     });

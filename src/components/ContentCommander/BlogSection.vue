@@ -8,8 +8,12 @@ const postContent = ref('');
 const isLoading = ref(false);
 const error = ref(null);
 
+import { inject } from 'vue';
+
 const activePost = computed(() => posts.value.find(p => p.id === activePostId.value));
 
+// Injected from App.vue (if routing via /blog/:id)
+const injectedPostId = inject('initialBlogPostId', ref(null));
 const requestedPostId = ref(null);
 
 const fetchIndex = async () => {
@@ -19,18 +23,17 @@ const fetchIndex = async () => {
         if (res.ok) {
             posts.value = await res.json();
             if (posts.value.length > 0) {
-                // Check for deep link via Query Param (captured on mount)
-                const queryId = requestedPostId.value;
-                
-                // Priority: Query Param > Session Storage > First Post
+                // Priority: Injected ID (Path) > Query Param > Session Storage > First Post
                 let targetId = posts.value[0].id;
+                
+                const pathId = injectedPostId.value;
+                const queryId = requestedPostId.value;
 
-                if (queryId) {
+                if (pathId && posts.value.find(p => p.id === pathId)) {
+                    targetId = pathId;
+                } else if (queryId) {
                     if (posts.value.find(p => p.id === queryId)) {
                         targetId = queryId;
-                        // Clear the query param from URL to clean it up (optional, but keeps URL nice)
-                        // const newUrl = window.location.pathname;
-                        // history.replaceState(null, '', newUrl);
                     } else {
                         console.warn(`Deep link post "${queryId}" not found in index.`);
                     }
@@ -41,7 +44,8 @@ const fetchIndex = async () => {
                     }
                 }
                 
-                selectPost(targetId);
+                // Don't trigger URL update for initial selection to avoid replacing history state excessively
+                selectPost(targetId, true);
             }
         } else {
             error.value = 'Failed to load blog index';
@@ -54,12 +58,20 @@ const fetchIndex = async () => {
 const postStats = ref({ views: 0, kudos: 0 });
 const showCopyHint = ref(false);
 
-const selectPost = async (id) => {
+const selectPost = async (id, isInitial = false) => {
     if (activePostId.value === id && postContent.value) return;
     
     activePostId.value = id;
     sessionStorage.setItem('last_blog_post_id', id);
-    SoundManager.playTypingSound();
+    if (!isInitial) SoundManager.playTypingSound();
+
+    // Update Browser URL (Clean Routing)
+    // Only if we aren't already on this path
+    const currentPath = window.location.pathname;
+    const targetPath = `/blog/${id}`;
+    if (!isInitial && currentPath !== targetPath) {
+        history.pushState({ index: 3 }, '', targetPath);
+    }
     
     const post = posts.value.find(p => p.id === id);
     if (!post) return;
@@ -110,7 +122,8 @@ const copyLink = async () => {
     if (!activePostId.value) return;
     SoundManager.playTypingSound();
     
-    const url = `${window.location.origin}/blog?post=${activePostId.value}`;
+    // Generate Pretty URL
+    const url = `${window.location.origin}/blog/${activePostId.value}`;
     
     try {
         await navigator.clipboard.writeText(url);
