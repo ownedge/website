@@ -10,15 +10,17 @@ const error = ref(null);
 
 const activePost = computed(() => posts.value.find(p => p.id === activePostId.value));
 
+const requestedPostId = ref(null);
+
 const fetchIndex = async () => {
     try {
-        const res = await fetch('/blog.php?action=list');
+        // Cache bust the list to ensure we see new posts immediately
+        const res = await fetch(`/blog.php?action=list&t=${Date.now()}`);
         if (res.ok) {
             posts.value = await res.json();
             if (posts.value.length > 0) {
-                // Check for deep link via Query Param
-                const params = new URLSearchParams(window.location.search);
-                const queryId = params.get('post');
+                // Check for deep link via Query Param (captured on mount)
+                const queryId = requestedPostId.value;
                 
                 // Priority: Query Param > Session Storage > First Post
                 let targetId = posts.value[0].id;
@@ -26,6 +28,9 @@ const fetchIndex = async () => {
                 if (queryId) {
                     if (posts.value.find(p => p.id === queryId)) {
                         targetId = queryId;
+                        // Clear the query param from URL to clean it up (optional, but keeps URL nice)
+                        // const newUrl = window.location.pathname;
+                        // history.replaceState(null, '', newUrl);
                     } else {
                         console.warn(`Deep link post "${queryId}" not found in index.`);
                     }
@@ -66,8 +71,8 @@ const selectPost = async (id) => {
     // Fetch content and register view in parallel
     try {
         const [contentRes, statsRes] = await Promise.all([
-            fetch(`/blog/${post.file}`),
-            fetch(`/blog.php?action=view&id=${id}`) // Register view and get stats
+            fetch(`/blog/${post.file}?t=${Date.now()}`), // Cache bust content too
+            fetch(`/blog.php?action=view&id=${id}&t=${Date.now()}`) 
         ]);
 
         if (contentRes.ok) {
@@ -105,15 +110,6 @@ const copyLink = async () => {
     if (!activePostId.value) return;
     SoundManager.playTypingSound();
     
-    // Construct URL based on current router setup
-    // Since it's a deep link, we can use query params or hash if router supports it,
-    // but for now let's assume the user lands on the blog tab and we select via logic.
-    // However, clean semantics dictate: ownedge.com/blog/<id>
-    // We haven't implemented explicit dynamic routing for /blog/:id in Vue Router (it's tab based).
-    // So the link will be: ownedge.com/blog?post=<id> (we need to handle this in onMounted)
-    // Or simply copy the current clean URL if we implement the routing logic.
-    
-    // Let's use a query param format for robustness:
     const url = `${window.location.origin}/blog?post=${activePostId.value}`;
     
     try {
@@ -146,6 +142,10 @@ const handleKeydown = (e) => {
 };
 
 onMounted(() => {
+    // Capture param synchronously on mount to avoid race conditions with router
+    const params = new URLSearchParams(window.location.search);
+    requestedPostId.value = params.get('post');
+    
     fetchIndex();
     window.addEventListener('keydown', handleKeydown, { capture: true });
 });
