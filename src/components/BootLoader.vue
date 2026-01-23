@@ -386,7 +386,7 @@ onUnmounted(() => {
                 <transition name="fade" mode="out-in">
                     <div v-if="bootStage === 'intro'" class="cookies-container" key="intro">
                         <div class="char-grid-container">
-                            <div class="char-label">USER ID</div>
+                            <div class="char-label">NICKNAME</div>
                             <div class="char-grid">
                                 <div 
                                     v-for="i in 8" 
