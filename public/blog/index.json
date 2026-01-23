@@ -1,5 +1,12 @@
 [
   {
+    "id": "15-years",
+    "title": "15 YEARS",
+    "date": "2026-01-23",
+    "summary": "Today marks Ownedge’s 15th anniversary.",
+    "file": "15-years.html"
+  },
+  {
     "id": "design-philosophy",
     "title": "DESIGN PHILOSOPHY",
     "date": "2024-03-15",
