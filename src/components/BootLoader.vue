@@ -7,6 +7,7 @@ const videoRef = ref(null);
 const canvasRef = ref(null);
 const introChoice = ref('yes'); // 'yes' or 'no'
 const transitionName = ref('slide-next');
+const nicknameChars = ref([]);
 
 const selectIntroOption = (choice) => {
     if (choice === introChoice.value) return;
@@ -62,14 +63,54 @@ const VISUALIZATION_CONFIG = {
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
+    // Navigation
     if (e.key === 'ArrowRight' || e.key === 'Right') {
         selectIntroOption('no');
+        return;
     } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
         selectIntroOption('yes');
+        return;
     } else if (e.key === 'Enter') {
         SoundManager.playTypingSound();
         handleConnect();
+        return;
     }
+
+    // Nickname Entry
+    if (e.key === 'Backspace') {
+        if (nicknameChars.value.length > 0) {
+            nicknameChars.value.pop();
+            SoundManager.playTypingSound();
+        }
+    } else if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
+        if (nicknameChars.value.length < 8) {
+            const charObj = {
+                final: e.key.toUpperCase(),
+                r1: getRandomChar(),
+                r2: getRandomChar(),
+                r3: getRandomChar(),
+                landed: false
+            };
+            nicknameChars.value.push(charObj);
+            
+            // Capture the reactive proxy immediately
+            const itemToAnimate = nicknameChars.value[nicknameChars.value.length - 1];
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    itemToAnimate.landed = true;
+                });
+            });
+            
+            SoundManager.playTypingSound();
+        }
+    }
+};
+
+const getRandomChar = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    return chars.charAt(Math.floor(Math.random() * chars.length));
 };
 
 const parseMessage = (text) => {
@@ -141,8 +182,12 @@ const handleConnect = async () => {
     // Remove listener
     window.removeEventListener('keydown', handleIntroKeydown);
     
+    const finalNick = nicknameChars.value.map(c => c.final).join('').trim();
+    
     // Auto-generate nickname since we don't ask
-    if (!chatStore.nickname || chatStore.nickname.trim() === '') {
+    if (finalNick !== '') {
+        chatStore.nickname = finalNick;
+    } else if (!chatStore.nickname || chatStore.nickname.trim() === '') {
         const rand = Math.floor(1000 + Math.random() * 9000);
         chatStore.nickname = `guest-${rand}`;
     }
@@ -340,6 +385,24 @@ onUnmounted(() => {
               <div class="popup-body">
                 <transition name="fade" mode="out-in">
                     <div v-if="bootStage === 'intro'" class="cookies-container" key="intro">
+                        <div class="char-grid-container">
+                            <div class="char-label">USER ID</div>
+                            <div class="char-grid">
+                                <div 
+                                    v-for="i in 8" 
+                                    :key="i" 
+                                    class="char-box"
+                                    :class="{ 'active': nicknameChars.length === i-1 }"
+                                >
+                                    <div v-if="nicknameChars[i-1]" class="cube" :class="{ landed: nicknameChars[i-1].landed }">
+                                        <div class="cube-face front">{{ nicknameChars[i-1].final }}</div>
+                                        <div class="cube-face back">{{ nicknameChars[i-1].r2 }}</div>
+                                        <div class="cube-face top">{{ nicknameChars[i-1].r1 }}</div>
+                                        <div class="cube-face bottom">{{ nicknameChars[i-1].r3 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <p>WATCH INTRO?</p>
                         
                         <div class="cookie-select-container">
@@ -481,7 +544,7 @@ onUnmounted(() => {
 .popup-body {
     padding: 20px 25px;
     text-align: center;
-    min-height: 180px; /* Fixed height to prevent resizing on state change */
+    min-height: 208px; /* Fixed height to prevent resizing on state change */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -600,8 +663,6 @@ onUnmounted(() => {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    margin-top: 15px;
-    padding: 2px;
     background: rgba(0,0,0,0.5);
     height: 40px; /* Fixed height for the block calculation */
     width: 200px; /* Fixed width for the block calculation */
@@ -661,5 +722,94 @@ onUnmounted(() => {
 
 .arrow-indicator {
     display: none; /* Hide arrows in this mode */
+}
+
+.arrow-indicator {
+    display: none; /* Hide arrows in this mode */
+}
+
+.char-grid-container {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.char-label {
+    font-size: 0.8rem;
+    color: #888;
+    margin: 0;
+    margin-bottom: 5px;
+}
+
+.char-grid {
+    display: flex;
+    gap: 6px;
+}
+
+.char-box {
+    width: 32px;
+    height: 42px;
+    border: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Microgramma', monospace;
+    font-size: 1.2rem;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    background: transparent;
+    transition: all 0.2s;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    perspective: 400px; /* 3D Scene */
+    overflow: hidden; /* Clip anything sticking out */
+}
+
+.cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(1260deg); /* Start on Back Face (Random) to hide Final */
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Elastic landing */
+}
+
+.cube.landed {
+    transform: rotateX(0deg); /* Land on front */
+}
+
+.cube-face {
+    position: absolute;
+    width: 32px;
+    height: 42px;
+    background: #000;
+    border: 1px solid rgba(64, 224, 208, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backface-visibility: hidden;
+    /* Center in 3D space */
+    left: -1px; /* Account for parent border alignment */
+    top: -1px;  /* Account for parent border alignment */
+}
+
+/* 
+Height is 42px. 
+Radius (translateZ) = 42/2 = 21px.
+*/
+.cube-face.front  { transform: rotateX(0deg) translateZ(21px); border-color: var(--color-accent); }
+.cube-face.back   { transform: rotateX(180deg) translateZ(21px); }
+.cube-face.top    { transform: rotateX(90deg) translateZ(21px); }
+.cube-face.bottom { transform: rotateX(-90deg) translateZ(21px); }
+
+.char-box.active {
+    border-color: var(--color-accent);
+    animation: blink-cursor 1s infinite alternate;
+}
+
+@keyframes blink-cursor {
+    from { border-color: var(--color-accent); box-shadow: 0 0 8px var(--color-accent), inset 0 0 5px rgba(0,0,0,0.5); }
+    to { border-color: #444; box-shadow: none, inset 0 0 5px rgba(0,0,0,0.5); }
 }
 </style>
