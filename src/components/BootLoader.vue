@@ -186,6 +186,19 @@ const addMessage = (text, delay = 0) => {
     });
 };
 
+const fetchGeoInfo = async () => {
+    try {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 2000); // 2s timeout
+        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        clearTimeout(id);
+        if (!res.ok) throw new Error('API Error');
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
+};
+
 const runBiosSequence = async () => {
     emit('progress', 0);
     await addMessage('> BIOS VERSION 4.2.Ø (C) 2011 OWNEDGE CORP', 500);
@@ -220,7 +233,30 @@ const runBiosSequence = async () => {
     emit('progress', 80);
     await addMessage('> INITIALIZING NETWORK STACK...', 500);
     emit('progress', 90);
-    await addMessage('> IP ADDRESS: ***.***.***.***', 100);
+    
+    // Fetch IP and Location
+    const geoData = await fetchGeoInfo();
+    let ipDisplay = '127.0.0.1';
+    let locDisplay = 'NET_ERR';
+
+    if (geoData && geoData.ip) {
+        ipDisplay = geoData.ip;
+        // Construct location: City, Country
+        const parts = [];
+        if (geoData.city) parts.push(geoData.city);
+        if (geoData.country_name) parts.push(geoData.country_name); // or country_code
+        if (parts.length > 0) locDisplay = parts.join(', ').toUpperCase();
+        else locDisplay = 'UNKNOWN_LOC';
+        
+        // Store in chatStore for later use
+        chatStore.userIp = geoData.ip;
+        chatStore.userLocation = locDisplay;
+    }
+    
+    await addMessage(`> IP ADDRESS: ${ipDisplay}`, 100);
+    if (locDisplay !== 'NET_ERR') {
+        await addMessage(`> LOCATION DETECTED: ${locDisplay}`, 100);
+    }
     
     emit('progress', 100);
     emit('ready'); // VFD is now ready for interaction
