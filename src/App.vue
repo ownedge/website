@@ -416,6 +416,11 @@ const handleGlobalKeydown = (e) => {
   const scrollContainer = document.querySelector('.scroll-content');
   if (!scrollContainer) return;
 
+  // 4. Block Global Nav if a Modal/Popup is open (e.g. Guestbook, Alert, BootLoader)
+  if (document.querySelector('.modal-overlay, .popup-overlay')) {
+      return;
+  }
+
   const isAtTop = scrollContainer.scrollTop < window.innerHeight / 2;
 
   // 2. Tab Navigation (Centralized)
