@@ -19,7 +19,7 @@ const requestedPostId = ref(null);
 const fetchIndex = async () => {
     try {
         // Cache bust the list to ensure we see new posts immediately
-        const res = await fetch(`/blog.php?action=list&t=${Date.now()}`);
+        const res = await fetch(`/api/blog.php?action=list&t=${Date.now()}`);
         if (res.ok) {
             posts.value = await res.json();
             if (posts.value.length > 0) {
@@ -84,7 +84,7 @@ const selectPost = async (id, isInitial = false) => {
     try {
         const [contentRes, statsRes] = await Promise.all([
             fetch(`/blog/${post.file}?t=${Date.now()}`), // Cache bust content too
-            fetch(`/blog.php?action=view&id=${id}&t=${Date.now()}`) 
+            fetch(`/api/blog.php?action=view&id=${id}&t=${Date.now()}`) 
         ]);
 
         if (contentRes.ok) {
@@ -109,7 +109,7 @@ const giveKudo = async () => {
     if (!activePostId.value) return;
     SoundManager.playTypingSound();
     try {
-        const res = await fetch(`/blog.php?action=kudo&id=${activePostId.value}`);
+        const res = await fetch(`/api/blog.php?action=kudo&id=${activePostId.value}`);
         if (res.ok) {
             postStats.value = await res.json();
         }

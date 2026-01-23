@@ -7,7 +7,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
 $action = $_GET['action'] ?? 'list';
-$blogDir = __DIR__ . '/blog';
+$blogDir = __DIR__ . '/../blog';
 $statsFile = $blogDir . '/stats.json';
 
 // Initialize stats file if needed

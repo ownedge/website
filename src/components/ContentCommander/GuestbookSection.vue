@@ -18,8 +18,8 @@ const newEntry = ref({
 });
 
 const API_URL = import.meta.env.PROD 
-  ? '/guestbook.php' 
-  : 'https://ownedge.com/guestbook.php';
+  ? '/api/guestbook.php' 
+  : '/api/guestbook.php'; // Local Vite proxy handles /api -> ownedge.com
 
 const fetchEntries = async () => {
     try {

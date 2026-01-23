@@ -6,7 +6,7 @@ ini_set('display_errors', 1);
  * Ownedge Guestbook Backend
  */
 
-$data_file = 'guestbook-entries.json';
+$data_file = '../guestbook-entries.json';
 
 // CORS implementation
 header("Access-Control-Allow-Origin: *");

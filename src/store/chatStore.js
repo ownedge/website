@@ -1,7 +1,7 @@
 import { reactive } from 'vue';
 
 const isProd = import.meta.env.PROD;
-const API_BASE = isProd ? '/chat.php' : 'https://ownedge.com/chat.php';
+const API_BASE = isProd ? '/api/chat.php' : '/api/chat.php';
 
 export const chatStore = reactive({
     chatNickname: null, // The actual unique nickname used on the network

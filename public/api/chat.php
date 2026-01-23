@@ -6,9 +6,9 @@ ini_set('display_errors', 1);
  * Robust PHP Chat Backend
  */
 
-$log_file = 'chat-log.json';
-$users_file = 'chat-users.json';
-$topic_file = 'chat-topic.json';
+$log_file = '../chat-log.json';
+$users_file = '../chat-users.json';
+$topic_file = '../chat-topic.json';
 
 // CORS Implementation
 header("Access-Control-Allow-Origin: *");
