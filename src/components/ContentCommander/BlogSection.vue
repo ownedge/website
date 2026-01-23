@@ -151,6 +151,14 @@ const handleKeydown = (e) => {
       e.stopImmediatePropagation();
       const prevIndex = (currentIndex - 1 + posts.value.length) % posts.value.length;
       selectPost(posts.value[prevIndex].id);
+  } else if (e.key === ' ') {
+      // Spacebar Scroll
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const contentCol = document.querySelector('.post-content-column');
+      if (contentCol) {
+          contentCol.scrollBy({ top: contentCol.clientHeight * 0.5, behavior: 'smooth' });
+      }
   }
 };
 
