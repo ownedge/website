@@ -18,7 +18,6 @@ const emit = defineEmits(['update:activeIndex', 'reset-settings']);
 const sections = {
   what: WhatSection,
   why: WhySection,
-  blog: BlogSection,
   guestbook: GuestbookSection,
   chat: ChatSection
 };

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "design-philosophy",
+    "title": "DESIGN PHILOSOPHY",
+    "date": "2024-03-15",
+    "summary": "Exploring the intersection of brutalism and digital user interfaces.",
+    "file": "design-philosophy.html"
+  },
+  {
+    "id": "hello-world",
+    "title": "HELLO WORLD",
+    "date": "2024-01-01",
+    "summary": "The genesis of the system.",
+    "file": "hello-world.html"
+  }
+]

@@ -60,7 +60,6 @@ const tabs = [
   { id: 'home', name: 'HOME' },
   { id: 'what', name: 'WHAT' },
   { id: 'why', name: 'WHY' },
-  { id: 'blog', name: 'BLOG' },
   { id: 'guestbook', name: 'GUESTBOOK' },
   { id: 'chat', name: 'CHAT' }
 ];
@@ -241,7 +240,7 @@ const handleGlobalClick = (e) => {
         }
 
         // 3. Chat Focus Lock
-        if (activeTabIndex.value === 5) { // Chat index
+        if (activeTabIndex.value === 4) { // Chat index
             const chatInput = document.querySelector('.irc-input-row input');
             if (chatInput && document.activeElement !== chatInput) {
                 // Don't steal if user purposefully clicked another input (unlikely due to matches check above)
@@ -492,7 +491,6 @@ const metadataMap = {
   home: { title: "Ownedge | Independent by Design", description: "Defying the establishment. A digital window for independent creators and builders." },
   what: { title: "Ownedge | What We Do", description: "Exploring the boundaries of digital products, strategy, and engineering." },
   why: { title: "Ownedge | Why We Exist", description: "The Ownedge manifesto: our vision for a more intentional, independent digital future." },
-  blog: { title: "Ownedge | Logs", description: "Transmission logs and updates from the core system." },
   guestbook: { title: "Ownedge | Leave Your Mark", description: "Sign the guestbook and join the lineage of terminal users." },
   chat: { title: "Ownedge | Terminal Cluster", description: "Communicate in real-time with other nodes connected to the Ownedge cluster." }
 };
@@ -512,7 +510,7 @@ const updateMetadata = (index) => {
         descriptionTag.setAttribute('content', data.description);
 
         // Update Open Graph tags
-        const paths = ['/', '/what', '/why', '/blog', '/guestbook', '/chat'];
+        const paths = ['/', '/what', '/why', '/guestbook', '/chat'];
         const path = paths[index] || '/';
         const url = `https://ownedge.com${path}`;
 
@@ -541,18 +539,16 @@ const routeMap = {
   '/': 0,
   '/what': 1,
   '/why': 2,
-  '/blog': 3,
-  '/guestbook': 4,
-  '/chat': 5
+  '/guestbook': 3,
+  '/chat': 4
 };
 
 const routePathByIndex = {
   0: '/',
   1: '/what',
   2: '/why',
-  3: '/blog',
-  4: '/guestbook',
-  5: '/chat'
+  3: '/guestbook',
+  4: '/chat'
 };
 
 const updateUrlFromIndex = (index) => {
