@@ -376,7 +376,7 @@ onUnmounted(() => {
           </div>
           
             <!-- Dial-Up Popup -->
-          <transition name="fade">
+          <transition name="popup-reveal">
             <div v-if="bootStage === 'intro' || bootStage === 'connecting'" class="popup-overlay">
               <div class="popup-header">
                 <span>REMOTE NODE LINK</span>
@@ -643,6 +643,32 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.popup-reveal-enter-active {
+  animation: popup-open 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.popup-reveal-leave-active {
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+@keyframes popup-open {
+    0% { opacity: 0; clip-path: inset(49% 0 49% 0); }
+    30% { opacity: 1; clip-path: inset(49% 0 49% 0); }
+    100% { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+/* Delay content appearance to let box expand first */
+.popup-reveal-enter-active .popup-body,
+.popup-reveal-enter-active .popup-header {
+    animation: simple-fade 0.3s 0.3s backwards;
+}
+
+@keyframes simple-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 900px) {
