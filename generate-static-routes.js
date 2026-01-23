@@ -7,9 +7,11 @@ const distPath = path.join(__dirname, 'dist');
 const indexPath = path.join(distPath, 'index.html');
 
 // Define your application routes (matching App.vue)
+// Define your application routes (matching App.vue)
 const routes = [
     'what',
     'why',
+    'blog',
     'guestbook',
     'chat'
 ];
@@ -25,6 +27,7 @@ const indexContent = fs.readFileSync(indexPath, 'utf8');
 const metadata = {
     what: { title: "Ownedge | What We Do", description: "Exploring the boundaries of digital products, strategy, and engineering." },
     why: { title: "Ownedge | Why We Exist", description: "The Ownedge manifesto: our vision for a more intentional, independent digital future." },
+    blog: { title: "Ownedge | Transmissions", description: "Updates, thoughts, and logs from the console." },
     guestbook: { title: "Ownedge | Leave Your Mark", description: "Sign the guestbook and join the lineage of terminal users." },
     chat: { title: "Ownedge | Terminal Cluster", description: "Communicate in real-time with other nodes connected to the Ownedge cluster." }
 };
@@ -54,6 +57,23 @@ const fallbackContent = {
           <ul>
             <li><a href="/what">What</a></li>
             <li><a href="/why">Why</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/guestbook">Guestbook</a></li>
+            <li><a href="/chat">Chat</a></li>
+          </ul>
+        </nav>
+      </main>
+    `.trim(),
+    blog: `
+      <main class="seo-content">
+        <h1>Ownedge</h1>
+        <h2>Logs</h2>
+        <p>Updates, thoughts, and logs from the console.</p>
+        <nav aria-label="Primary">
+          <ul>
+            <li><a href="/what">What</a></li>
+            <li><a href="/why">Why</a></li>
+            <li><a href="/blog">Blog</a></li>
             <li><a href="/guestbook">Guestbook</a></li>
             <li><a href="/chat">Chat</a></li>
           </ul>
@@ -130,6 +150,31 @@ routes.forEach(route => {
     console.log(`Generated static route: /${route}/index.html with metadata`);
 });
 
+// Scan for blog posts to include in sitemap
+const blogDir = path.join(__dirname, 'public/blog');
+const blogPosts = [];
+if (fs.existsSync(blogDir)) {
+    const files = fs.readdirSync(blogDir).filter(f => f.endsWith('.html'));
+    files.forEach(file => {
+        const content = fs.readFileSync(path.join(blogDir, file), 'utf8');
+        const match = content.match(/<!--\s*::metadata::(.*?)::\/metadata::\s*-->/s);
+        if (match) {
+            const meta = {};
+            match[1].split('\n').forEach(line => {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    const key = parts.shift().trim();
+                    const value = parts.join(':').trim();
+                    if (key) meta[key] = value;
+                }
+            });
+            if (meta.id && meta.date) {
+                blogPosts.push({ id: meta.id, date: meta.date });
+            }
+        }
+    });
+}
+
 // Generate Sitemap.xml
 const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -144,6 +189,12 @@ ${routes.map(route => `  <url>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>`).join('\n')}
+${blogPosts.map(post => `  <url>
+    <loc>${baseUrl}/blog/${post.id}</loc>
+    <lastmod>${post.date}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>`).join('\n')}
 </urlset>`;
 

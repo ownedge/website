@@ -16,9 +16,22 @@ const fetchIndex = async () => {
         if (res.ok) {
             posts.value = await res.json();
             if (posts.value.length > 0) {
-                // Restore selection or default to first
-                const savedId = sessionStorage.getItem('last_blog_post_id');
-                const targetId = savedId && posts.value.find(p => p.id === savedId) ? savedId : posts.value[0].id;
+                // Check for deep link via Query Param
+                const params = new URLSearchParams(window.location.search);
+                const queryId = params.get('post');
+                
+                // Priority: Query Param > Session Storage > First Post
+                let targetId = posts.value[0].id;
+
+                if (queryId && posts.value.find(p => p.id === queryId)) {
+                    targetId = queryId;
+                } else {
+                    const savedId = sessionStorage.getItem('last_blog_post_id');
+                    if (savedId && posts.value.find(p => p.id === savedId)) {
+                        targetId = savedId;
+                    }
+                }
+                
                 selectPost(targetId);
             }
         } else {
@@ -80,6 +93,30 @@ const giveKudo = async () => {
         }
     } catch (e) {
         console.error('Failed to give kudo', e);
+    }
+};
+
+const copyLink = async () => {
+    if (!activePostId.value) return;
+    SoundManager.playTypingSound();
+    
+    // Construct URL based on current router setup
+    // Since it's a deep link, we can use query params or hash if router supports it,
+    // but for now let's assume the user lands on the blog tab and we select via logic.
+    // However, clean semantics dictate: ownedge.com/blog/<id>
+    // We haven't implemented explicit dynamic routing for /blog/:id in Vue Router (it's tab based).
+    // So the link will be: ownedge.com/blog?post=<id> (we need to handle this in onMounted)
+    // Or simply copy the current clean URL if we implement the routing logic.
+    
+    // Let's use a query param format for robustness:
+    const url = `${window.location.origin}/blog?post=${activePostId.value}`;
+    
+    try {
+        await navigator.clipboard.writeText(url);
+        // Visual feedback could be added here
+        alert('LINK COPIED TO CLIPBOARD'); 
+    } catch (err) {
+        console.error('Failed to copy', err);
     }
 };
 
@@ -163,6 +200,10 @@ onUnmounted(() => {
                             <span class="kudos-icon">♥</span>
                             <span class="stat-value">{{ postStats.kudos }}</span>
                         </div>
+                    </div>
+                    <div class="stat-item interactive" @click="copyLink">
+                         <span class="stat-label">SHARE</span>
+                         <span class="stat-icon">🔗</span>
                     </div>
                 </div>
             </div>
@@ -348,6 +389,10 @@ onUnmounted(() => {
 .kudos-icon {
     font-size: 1.2rem;
     color: #ff4444;
+}
+
+.stat-icon {
+    font-size: 1.2rem;
 }
 
 .post-content-wrapper {
