@@ -60,6 +60,73 @@ const VISUALIZATION_CONFIG = {
     horizontalPadding: 10
 };
 
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ";
+const lastCharIndex = ref(0);
+
+const addNicknameChar = (key) => {
+    if (nicknameChars.value.length >= 8) return;
+
+    const targetChar = key.toUpperCase();
+    const targetIndex = CHARS.indexOf(targetChar);
+    
+    // Calculate Rotation
+    let diff = targetIndex - lastCharIndex.value;
+    
+    // Handle collision (start/end on same face)
+    if (diff !== 0 && diff % 4 === 0) {
+        // Offset by 1 step in the direction of travel to avoid collision
+        diff += (diff > 0) ? -1 : 1;
+    }
+    
+    const startRotationDeg = -(diff * 90);
+    
+    // Calculate Duration based on distance
+    const steps = Math.abs(diff);
+    const durationSec = Math.min(0.3 + (steps * 0.02), 1.0);
+    
+    // Map Faces
+    let startFaceIdx = diff % 4;
+    if (startFaceIdx < 0) startFaceIdx += 4;
+    
+    const faces = {
+        front: getRandomChar(),
+        bottom: getRandomChar(),
+        back: getRandomChar(),
+        top: getRandomChar()
+    };
+    
+    // Set Start Char
+    const faceKeys = ['front', 'bottom', 'back', 'top'];
+    const startChar = CHARS[lastCharIndex.value];
+    faces[faceKeys[startFaceIdx]] = startChar;
+    
+    // Set Final Char (Always Front)
+    faces.front = targetChar;
+    
+    const charObj = {
+        final: targetChar,
+        faces: faces,
+        startRot: `rotateX(${startRotationDeg}deg)`,
+        duration: `${durationSec}s`,
+        landed: false
+    };
+    
+    nicknameChars.value.push(charObj);
+    lastCharIndex.value = targetIndex;
+    
+    // Capture the reactive proxy immediately
+    const itemToAnimate = nicknameChars.value[nicknameChars.value.length - 1];
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            itemToAnimate.landed = true;
+        });
+    });
+    
+    SoundManager.playTypingSound();
+};
+
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
@@ -80,37 +147,23 @@ const handleIntroKeydown = (e) => {
     if (e.key === 'Backspace') {
         if (nicknameChars.value.length > 0) {
             nicknameChars.value.pop();
+            
+            // Re-calc last index
+            if (nicknameChars.value.length > 0) {
+                const last = nicknameChars.value[nicknameChars.value.length - 1];
+                lastCharIndex.value = CHARS.indexOf(last.final);
+            } else {
+                lastCharIndex.value = 0;
+            }
             SoundManager.playTypingSound();
         }
-    } else if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
-        if (nicknameChars.value.length < 8) {
-            const charObj = {
-                final: e.key.toUpperCase(),
-                r1: getRandomChar(),
-                r2: getRandomChar(),
-                r3: getRandomChar(),
-                landed: false
-            };
-            nicknameChars.value.push(charObj);
-            
-            // Capture the reactive proxy immediately
-            const itemToAnimate = nicknameChars.value[nicknameChars.value.length - 1];
-
-            // Trigger animation
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    itemToAnimate.landed = true;
-                });
-            });
-            
-            SoundManager.playTypingSound();
-        }
+    } else if (e.key.length === 1 && /[a-zA-Z0-9\-_]/.test(e.key)) {
+        addNicknameChar(e.key);
     }
 };
 
 const getRandomChar = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    return chars.charAt(Math.floor(Math.random() * chars.length));
+    return CHARS.charAt(Math.floor(Math.random() * CHARS.length));
 };
 
 const parseMessage = (text) => {
@@ -167,22 +220,44 @@ const runBiosSequence = async () => {
     emit('progress', 80);
     await addMessage('> INITIALIZING NETWORK STACK...', 500);
     emit('progress', 90);
-    await addMessage('> IP ADDRESS: 127.0.0.1 (LOCALHOST)', 100);
+    await addMessage('> IP ADDRESS: ***.***.***.***', 100);
     
     emit('progress', 100);
     emit('ready'); // VFD is now ready for interaction
     
     bootStage.value = 'intro';
     window.addEventListener('keydown', handleIntroKeydown);
+
+    // Auto-type stored nickname if exists and not guest
+    if (chatStore.nickname && !chatStore.nickname.startsWith('guest-')) {
+        await new Promise(r => setTimeout(r, 800)); // Delay for popup animation
+        const nickToType = chatStore.nickname.substring(0, 8);
+        for (const char of nickToType) {
+            // Stop if user skipped or stage changed
+            if (props.isBooted || bootStage.value !== 'intro') break;
+            
+            // Check if char is valid for our carousel (alphanumeric+dash+underscore)
+            if (/[a-zA-Z0-9\-_]/.test(char)) {
+                addNicknameChar(char);
+                await new Promise(r => setTimeout(r, 150));
+            }
+        }
+    }
 };
 
 const handleConnect = async () => {
     if (isConnecting.value) return;
     
+    // Fill remaining slots with blocks (Space) for visual effect
+    while (nicknameChars.value.length < 8) {
+        addNicknameChar(' ');
+        await new Promise(r => setTimeout(r, 60));
+    }
+
     // Remove listener
     window.removeEventListener('keydown', handleIntroKeydown);
     
-    const finalNick = nicknameChars.value.map(c => c.final).join('').trim();
+    const finalNick = nicknameChars.value.map(c => c.final).join('').trim().toLowerCase();
     
     // Auto-generate nickname since we don't ask
     if (finalNick !== '') {
@@ -394,11 +469,19 @@ onUnmounted(() => {
                                     class="char-box"
                                     :class="{ 'active': nicknameChars.length === i-1 }"
                                 >
-                                    <div v-if="nicknameChars[i-1]" class="cube" :class="{ landed: nicknameChars[i-1].landed }">
-                                        <div class="cube-face front">{{ nicknameChars[i-1].final }}</div>
-                                        <div class="cube-face back">{{ nicknameChars[i-1].r2 }}</div>
-                                        <div class="cube-face top">{{ nicknameChars[i-1].r1 }}</div>
-                                        <div class="cube-face bottom">{{ nicknameChars[i-1].r3 }}</div>
+                                    <div 
+                                        v-if="nicknameChars[i-1]" 
+                                        class="cube" 
+                                        :class="{ landed: nicknameChars[i-1].landed }"
+                                        :style="{ 
+                                            transform: nicknameChars[i-1].landed ? 'rotateX(0deg)' : nicknameChars[i-1].startRot, 
+                                            transitionDuration: nicknameChars[i-1].duration 
+                                        }"
+                                    >
+                                        <div class="cube-face front">{{ nicknameChars[i-1].faces.front }}</div>
+                                        <div class="cube-face back">{{ nicknameChars[i-1].faces.back }}</div>
+                                        <div class="cube-face top">{{ nicknameChars[i-1].faces.top }}</div>
+                                        <div class="cube-face bottom">{{ nicknameChars[i-1].faces.bottom }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -797,8 +880,9 @@ onUnmounted(() => {
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transform: rotateX(1260deg); /* Start on Back Face (Random) to hide Final */
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Elastic landing */
+    transform: rotateX(0deg);
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .cube.landed {
@@ -809,8 +893,10 @@ onUnmounted(() => {
     position: absolute;
     width: 32px;
     height: 42px;
-    background: #000;
-    border: 1px solid rgba(64, 224, 208, 0.2);
+    background: var(--color-accent);
+    color: #000;
+    font-weight: bold;
+    border: 1px solid rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -824,7 +910,7 @@ onUnmounted(() => {
 Height is 42px. 
 Radius (translateZ) = 42/2 = 21px.
 */
-.cube-face.front  { transform: rotateX(0deg) translateZ(21px); border-color: var(--color-accent); }
+.cube-face.front  { transform: rotateX(0deg) translateZ(21px); }
 .cube-face.back   { transform: rotateX(180deg) translateZ(21px); }
 .cube-face.top    { transform: rotateX(90deg) translateZ(21px); }
 .cube-face.bottom { transform: rotateX(-90deg) translateZ(21px); }
