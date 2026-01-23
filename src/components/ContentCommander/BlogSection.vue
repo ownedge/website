@@ -170,7 +170,7 @@ onUnmounted(() => {
 
 <template>
   <div class="section-content animate-in">
-    <h3>> BLOG</h3>
+    <h3>> LOGS</h3>
     
     <div class="blog-layout">
       <!-- Left Menu: Post List -->
@@ -352,16 +352,16 @@ onUnmounted(() => {
 }
 
 .post-content-column {
-    flex: 1;
+    flex: 2;
     overflow-y: auto;
     padding-right: 15px;
     scrollbar-width: thin;
-    scrollbar-color: var(--color-accent) #111;
+    scrollbar-color: rgba(62, 229, 212, 0.812) transparent;
 }
 
 /* Custom Scroll for inner content */
 .post-content-column::-webkit-scrollbar { width: 6px; }
-.post-content-column::-webkit-scrollbar-thumb { background: var(--color-accent); }
+.post-content-column::-webkit-scrollbar-thumb { background: rgba(64, 224, 208, 0.4); }
 .post-content-column::-webkit-scrollbar-track { background: #111; }
 
 .post-stats-column {
