@@ -9,6 +9,7 @@ export const chatStore = reactive({
     showPopup: true,
     userLat: null,
     userLon: null,
+    sessionId: null,
     messages: [],
     users: [],
     pollingInterval: null,
@@ -22,6 +23,14 @@ export const chatStore = reactive({
         this.messages = [];
         this.chatNickname = null; // Reset
         
+        // Load or Create Session ID
+        let sid = localStorage.getItem('chat_session_id');
+        if (!sid) {
+            sid = 'sess-' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+            localStorage.setItem('chat_session_id', sid);
+        }
+        this.sessionId = sid;
+
         // 1. Fetch Users RAW (don't filter self) to check for duplicates
         await this.fetchUsers(false);
         
@@ -31,8 +40,17 @@ export const chatStore = reactive({
             let candidate = base;
             let suffix = 2;
             
-            // Check case-insensitive against ALL online users
-            while (this.users.some(u => u.nickname.toLowerCase() === candidate.toLowerCase())) {
+            // Reclaim strategy: If duplicate exists BUT has same session ID, it's us (ghost). We take it.
+            // If duplicate exists has different session ID, it's taken. we rename.
+            
+            const isTaken = (name) => {
+                 return this.users.some(u => 
+                    u.nickname.toLowerCase() === name.toLowerCase() && 
+                    u.id !== this.sessionId // Only count as taken if ID is diff
+                 );
+            };
+
+            while (isTaken(candidate)) {
                 candidate = `${base}${suffix}`;
                 suffix++;
             }
@@ -185,7 +203,7 @@ export const chatStore = reactive({
         if (!this.isConnected || !this.nickname) return;
         const activeNick = this.chatNickname || this.nickname;
         
-        const payload = { nickname: activeNick };
+        const payload = { nickname: activeNick, id: this.sessionId };
         if (this.userLat) payload.lat = this.userLat;
         if (this.userLon) payload.lon = this.userLon;
 
@@ -337,7 +355,15 @@ export const chatStore = reactive({
         await this.fetchUsers(false);
         let candidate = cleanNick;
         let suffix = 2;
-        while (this.users.some(u => u.nickname.toLowerCase() === candidate.toLowerCase())) {
+        
+        const isTaken = (name) => {
+             return this.users.some(u => 
+                u.nickname.toLowerCase() === name.toLowerCase() && 
+                u.id !== this.sessionId 
+             );
+        };
+
+        while (isTaken(candidate)) {
             candidate = `${cleanNick}${suffix}`;
             suffix++;
         }

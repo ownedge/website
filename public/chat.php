@@ -240,6 +240,7 @@ if ($action === 'presence' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $userData['seen'] = time();
         if (isset($data['lat'])) $userData['lat'] = $data['lat'];
         if (isset($data['lon'])) $userData['lon'] = $data['lon'];
+        if (isset($data['id'])) $userData['id'] = $data['id'];
         
         $users[$nick] = $userData;
         save_data($users_file, $users);
@@ -277,6 +278,7 @@ if ($action === 'users') {
         if (is_array($data)) {
             if (isset($data['lat'])) $entry['lat'] = $data['lat'];
             if (isset($data['lon'])) $entry['lon'] = $data['lon'];
+            if (isset($data['id'])) $entry['id'] = $data['id'];
         }
         $list[] = $entry;
     }
