@@ -860,7 +860,7 @@ onUnmounted(() => {
 .char-box {
     width: 32px;
     height: 42px;
-    border: 1px solid #333;
+    border: 1px solid rgba(0,0,0,0.4);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -868,9 +868,9 @@ onUnmounted(() => {
     font-size: 1.2rem;
     color: var(--color-accent);
     text-transform: uppercase;
-    background: transparent;
+    background: var(--color-accent);
     transition: all 0.2s;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
     perspective: 400px; /* 3D Scene */
     overflow: hidden; /* Clip anything sticking out */
 }
@@ -916,12 +916,11 @@ Radius (translateZ) = 42/2 = 21px.
 .cube-face.bottom { transform: rotateX(-90deg) translateZ(21px); }
 
 .char-box.active {
-    border-color: var(--color-accent);
-    animation: blink-cursor 1s infinite alternate;
+    animation: blink-cursor 1s infinite;
 }
 
 @keyframes blink-cursor {
-    from { border-color: var(--color-accent); box-shadow: 0 0 8px var(--color-accent), inset 0 0 5px rgba(0,0,0,0.5); }
-    to { border-color: #444; box-shadow: none, inset 0 0 5px rgba(0,0,0,0.5); }
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.1; }
 }
 </style>
