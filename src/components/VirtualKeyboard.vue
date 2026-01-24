@@ -105,7 +105,7 @@ const handleClose = () => {
                 <!-- Bottom Action Row -->
                 <div class="kb-row actions">
                    <button class="kb-key action-key wide" @click.stop="handleSpace">SPACE</button>
-                   <button class="kb-key action-key" style="font-size: 1.5rem;" @click.stop="handleBackspace">⌫</button>
+                   <button class="kb-key action-key" style="font-size: 1.8rem;" @click.stop="handleBackspace">⌫</button>
                    <button class="kb-key action-key enter" @click.stop="handleEnter">ENTER ⏎</button>
                 </div>
             </div>

@@ -620,6 +620,11 @@ const handleTabSelect = (index) => {
     // CRITICAL: Set lock BEFORE updating index to stop observer immediately
     isScrollingManually.value = true;
     
+    // Close keyboard if open (fixes layout shift issues on mobile)
+    if (keyboardStore.isVisible.value) {
+        keyboardStore.close();
+    }
+    
     activeTabIndex.value = index;
     
     // Update lastActiveContentTab if not HOME (0)
@@ -645,7 +650,18 @@ const handleTabSelect = (index) => {
         // Only scroll to the content section if we aren't already there.
         // This is key for Safari stability.
         scrollToContent();
-        finishScroll();
+        
+        // Mobile Layout Shift Fix:
+        // If on mobile, the layout (Hero height) might animate/change if keyboard closes.
+        // We must re-adjust scroll AFTER the animation settles.
+        if (isMobile.value) {
+             setTimeout(() => {
+                 scrollToContent();
+                 finishScroll();
+             }, 350); // > 200ms transition + buffer
+        } else {
+             finishScroll();
+        }
     }
 };
 
