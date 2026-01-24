@@ -128,6 +128,14 @@ const addNicknameChar = (key) => {
     SoundManager.playTypingSound();
 };
 
+const triggerKeyboard = () => {
+    if (hiddenInput.value) {
+        hiddenInput.value.focus();
+        // Optional: Reset value to ensure clean state
+        hiddenInput.value.value = '';
+    }
+};
+
 const handleMobileInput = (e) => {
     const val = e.target.value;
     if (!val) return;
@@ -147,11 +155,9 @@ const handleMobileInput = (e) => {
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
-    // Keep focus on hidden input if user clicks away
-    if (hiddenInput.value && document.activeElement !== hiddenInput.value) {
-        hiddenInput.value.focus();
-    }
-
+    // Ignore if typing in the hidden input (handled by @input)
+    if (e.target.tagName === 'INPUT') return;
+    
     // Navigation
     if (e.key === 'ArrowRight' || e.key === 'Right') {
         selectIntroOption('no');
@@ -528,8 +534,13 @@ onUnmounted(() => {
               <div class="popup-body">
                 <transition name="fade" mode="out-in">
                     <div v-if="bootStage === 'intro'" class="cookies-container" key="intro">
-                        <div class="char-grid-container">
-                            <div class="char-label">NICKNAME</div>
+                        <div class="char-grid-container" @click="triggerKeyboard">
+                            <div class="char-label">
+                                NICKNAME 
+                                <div class="mobile-keyboard-btn" @click.stop="triggerKeyboard">
+                                    <span class="kb-icon">⌨</span> OPEN KEYBOARD
+                                </div>
+                            </div>
                             <div class="char-grid">
                                 <div 
                                     v-for="i in 8" 
@@ -554,6 +565,9 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
+                        
+
+
                         <p>WATCH INTRO?</p>
                         
                         <div class="cookie-select-container">
@@ -845,7 +859,38 @@ onUnmounted(() => {
     z-index: -1;
 }
 
+.mobile-keyboard-btn {
+    display: none; /* Hidden by default (Desktop) */
+    font-size: 0.45rem;
+    color: var(--color-accent);
+    background: rgba(64, 224, 208, 0.1);
+    border: 0px solid var(--color-accent);
+    padding: 2px 8px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-family: 'Microgramma', monospace;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    vertical-align: middle;
+}
+
+.mobile-keyboard-btn:active {
+    background: var(--color-accent);
+    color: #000;
+}
+
+.kb-icon {
+    font-size: 0.9rem;
+    margin-right: 5px;
+}
+
+
+
 @media (max-width: 900px) {
+    .mobile-keyboard-btn {
+        display: inline-flex;
+        align-items: center;
+    }
     .terminal-overlay {
         padding: 20px;
     }
