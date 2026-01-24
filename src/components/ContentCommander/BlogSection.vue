@@ -211,7 +211,7 @@ onUnmounted(() => {
                 <!-- Content Column -->
                 <div class="post-content-column custom-scroll">
                     <div class="post-header-meta" v-if="activePost">
-                         <h1>{{ activePost.title }}</h1>
+                         <h1>{{ activePost.displayTitle || activePost.title }}</h1>
                     </div>
                     <!-- V-HTML Secure Content -->
                     <div class="blog-body" v-html="postContent"></div>
