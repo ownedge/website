@@ -538,7 +538,7 @@ onUnmounted(() => {
                             <div class="char-label">
                                 NICKNAME 
                                 <div class="mobile-keyboard-btn" @click.stop="triggerKeyboard">
-                                    <span class="kb-icon">⌨</span> OPEN KEYBOARD
+                                    <span class="kb-icon">⌨</span> KEYBOARD
                                 </div>
                             </div>
                             <div class="char-grid">
@@ -861,10 +861,10 @@ onUnmounted(() => {
 
 .mobile-keyboard-btn {
     display: none; /* Hidden by default (Desktop) */
-    font-size: 0.45rem;
+    font-size: 0.55rem;
     color: var(--color-accent);
     background: rgba(64, 224, 208, 0.1);
-    border: 0px solid var(--color-accent);
+    border: 0.5px solid var(--color-accent);
     padding: 2px 8px;
     cursor: pointer;
     margin-left: 10px;
