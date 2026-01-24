@@ -230,11 +230,12 @@ onUnmounted(() => {
     <!-- Modal Overlay -->
     <Transition name="fade">
       <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content animate-pop">
-          <div class="popup-header">
-            <span>SIGN GUESTBOOK</span>
-            <div class="esc-label" @click="closeModal">ESC</div>
-          </div>
+        <Transition name="popup-reveal" appear>
+            <div class="modal-content">
+              <div class="popup-header">
+                <span>SIGN GUESTBOOK</span>
+                <div class="esc-label" @click="closeModal">ESC</div>
+              </div>
           
           <div v-if="!showSuccess" class="form-body">
 
@@ -286,6 +287,7 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
+        </Transition>
       </div>
     </Transition>
   </div>
@@ -443,6 +445,15 @@ onUnmounted(() => {
     max-width: 90%;
     position: relative;
     overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .modal-content {
+        position: absolute; /* Override flex alignment */
+        top: 30%; /* Move up */
+        left: 50%;
+        transform: translate(-50%, -30%);
+    }
 }
 
 .popup-header {
@@ -626,5 +637,30 @@ onUnmounted(() => {
     }
     
     @keyframes blink { 50% { opacity: 0; } }
+}
+
+/* Modal Open Animation (Copied from BootLoader) */
+.popup-reveal-enter-active {
+    animation: popup-open 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.popup-reveal-leave-active {
+    animation: popup-open 0.3s cubic-bezier(0.19, 1, 0.22, 1) reverse;
+}
+
+@keyframes popup-open {
+    0% { opacity: 0; clip-path: inset(49% 0 49% 0); }
+    30% { opacity: 1; clip-path: inset(49% 0 49% 0); }
+    100% { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+.popup-reveal-enter-active .popup-body,
+.popup-reveal-enter-active .popup-header {
+    animation: simple-fade 0.3s 0.3s backwards;
+}
+
+@keyframes simple-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 </style>

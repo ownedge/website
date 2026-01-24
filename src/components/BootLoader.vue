@@ -698,6 +698,13 @@ onUnmounted(() => {
     z-index: 1000;
 }
 
+@media (max-width: 900px) {
+    .popup-overlay {
+        top: 30%; /* Move up on mobile to avoid keyboard */
+        transform: translate(-50%, -30%);
+    }
+}
+
 .popup-header {
     background: var(--color-accent);
     color: #000;

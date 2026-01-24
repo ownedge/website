@@ -76,9 +76,17 @@
     <meta property="twitter:image" content="https://ownedge.com/favicon-master.png" />
 
     <script>
+      // Save native Promise to protect against polyfills in legacy libs
+      window._NativePromise = window.Promise;
       var libopenmpt = {};
     </script>
     <script src="/js/libopenmpt.js"></script>
+    <script>
+      // Restore native Promise if it was clobbered
+      if (window.Promise !== window._NativePromise) {
+        window.Promise = window._NativePromise;
+      }
+    </script>
     <script src="/js/chiptune2.js"></script>
     <style>
       /* SEO Content: Visible to bots, hidden from users via overlay */

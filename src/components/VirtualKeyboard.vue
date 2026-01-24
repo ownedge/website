@@ -110,7 +110,7 @@ const handleClose = () => {
     z-index: 30; /* Below scanlines (50) but above content (20) */
     display: flex;
     flex-direction: column;
-    padding-bottom: 20px; /* Safe area */
+    padding-bottom: 0; /* Remove safe area padding as requested */
     font-family: 'Microgramma', monospace;
     user-select: none;
     backdrop-filter: blur(5px);
