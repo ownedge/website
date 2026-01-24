@@ -131,7 +131,7 @@ onUnmounted(() => {
     padding: 0;
     gap: 0;
     align-items: flex-end; /* Ground the tabs so they expand upwards smoothly */
-    height: 64px; /* Total height of largest tab */
+    height: 44px; /* Total height of largest tab */
     margin: 0;
     width: 100%;
     position: relative; /* Context for absolute indicator */
