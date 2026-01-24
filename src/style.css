@@ -22,6 +22,10 @@
   --font-script: 'Rockybilly', cursive;
 }
 
+html {
+  touch-action: manipulation;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
