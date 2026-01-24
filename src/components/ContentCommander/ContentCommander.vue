@@ -247,6 +247,10 @@ onUnmounted(() => {
 
 /* Mobile Responsive */
 @media (max-width: 900px) {
+    .tui-tab-bar {
+        margin: 0 !important;
+    }
+
     .tui-viewport {
         padding: 20px 15px;
         font-size: 1rem;
