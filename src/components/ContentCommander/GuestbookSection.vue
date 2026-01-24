@@ -44,11 +44,26 @@ const openModal = () => {
     SoundManager.playTypingSound();
 };
 
+const resetMobileScroll = () => {
+    if (window.innerWidth <= 900) {
+        // Wait for keyboard close animation (approx 300-350ms)
+        setTimeout(() => {
+            const scrollContainer = document.querySelector('.scroll-content');
+            const sections = document.querySelectorAll('.page-section');
+            if (scrollContainer && sections.length > 1) {
+                const targetTop = sections[1].offsetTop;
+                scrollContainer.scrollTo({ top: targetTop, behavior: 'smooth' });
+            }
+        }, 350);
+    }
+};
+
 const closeModal = () => {
     isModalOpen.value = false;
     // Ensure keyboard closes if on mobile
     if (window.innerWidth <= 900) {
         keyboardStore.close();
+        resetMobileScroll();
     }
 };
 
@@ -79,7 +94,7 @@ const openVirtualKeyboard = () => {
             newEntry.value.message = newEntry.value.message.slice(0, -1);
         } else if (key === 'ENTER') {
             handleSubmit();
-            keyboardStore.close(); // Explicitly close since modal closes
+            // handleSubmit will handle closing and scrolling
         } else {
              if (newEntry.value.message.length < 256) {
                  newEntry.value.message += key;
@@ -140,6 +155,7 @@ const handleSubmit = async () => {
                 // Close virtual keyboard if open
                 if (window.innerWidth <= 900) {
                     keyboardStore.close();
+                    resetMobileScroll();
                 }
             }, 2000);
         }
