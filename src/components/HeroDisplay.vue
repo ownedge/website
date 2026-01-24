@@ -432,14 +432,14 @@ onUnmounted(() => {
 }
 @media (max-width: 900px) {
   .title {
-    font-size: 13.5vw;
+    font-size: 12vw;
     margin-bottom: 10px;
   }
   .subtitle {
     font-size: 1.0rem;
   }
   .content {
-    margin-top: -5vh; 
+    margin-top: -5vh;
   }
   .logo-img {
     width: 45vw;

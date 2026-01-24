@@ -62,6 +62,7 @@ const VISUALIZATION_CONFIG = {
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ";
 const lastCharIndex = ref(0);
+const hiddenInput = ref(null);
 
 const addNicknameChar = (key) => {
     if (nicknameChars.value.length >= 8) return;
@@ -127,9 +128,30 @@ const addNicknameChar = (key) => {
     SoundManager.playTypingSound();
 };
 
+const handleMobileInput = (e) => {
+    const val = e.target.value;
+    if (!val) return;
+    
+    // Get the last character typed
+    const char = val.slice(-1);
+    
+    // Reset input to avoid clutter, but keep focus
+    e.target.value = '';
+    
+    // Pass to standard handler logic
+    if (/[a-zA-Z0-9\-_ ]/.test(char)) {
+        addNicknameChar(char);
+    }
+};
+
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
+    // Keep focus on hidden input if user clicks away
+    if (hiddenInput.value && document.activeElement !== hiddenInput.value) {
+        hiddenInput.value.focus();
+    }
+
     // Navigation
     if (e.key === 'ArrowRight' || e.key === 'Right') {
         selectIntroOption('no');
@@ -280,6 +302,14 @@ const runBiosSequence = async () => {
                 await new Promise(r => setTimeout(r, 150));
             }
         }
+    } else {
+        // If no stored nickname, force focus on hidden input for mobile users
+        // Use a slight delay to ensure the modal transition is done
+        setTimeout(() => {
+            if (hiddenInput.value && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+                hiddenInput.value.focus();
+            }
+        }, 1000);
     }
 };
 
@@ -542,6 +572,18 @@ onUnmounted(() => {
                                 @click="confirmIntroOption('no')"
                             >NO</div>
                         </div>
+                        
+                        <!-- Hidden Input for Mobile Keyboard -->
+                        <input 
+                            ref="hiddenInput"
+                            type="text" 
+                            class="mobile-input-trap" 
+                            autocomplete="off" 
+                            autocorrect="off" 
+                            autocapitalize="off" 
+                            spellcheck="false"
+                            @input="handleMobileInput"
+                        />
                     </div>
 
                     <div v-else-if="bootStage === 'connecting'" class="connection-status" key="connecting">
@@ -790,6 +832,17 @@ onUnmounted(() => {
 @keyframes simple-fade {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+.mobile-input-trap {
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    height: 1px;
+    width: 1px;
+    pointer-events: none;
+    z-index: -1;
 }
 
 @media (max-width: 900px) {

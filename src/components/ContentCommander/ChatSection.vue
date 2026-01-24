@@ -168,7 +168,7 @@ const startMapAnimation = () => {
         if (canvasRatio > targetRatio) {
             // Canvas is wider than map -> constrain by height
             mapH = canvas.height;
-            mapW = mapH * targetRatio;
+            mapW = mapH * targetRatio * 0.7;
         } else {
             // Canvas is narrower -> constrain by width
             mapW = canvas.width;
@@ -187,7 +187,7 @@ const startMapAnimation = () => {
             
             ctx.beginPath();
             // High res scale
-            const size = Math.max(0.5 * dpr, mapW / 1800);
+            const size = Math.max(0.5 * dpr, mapW / 1400);
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fill();
         });
