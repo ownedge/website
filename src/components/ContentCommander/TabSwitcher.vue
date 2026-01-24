@@ -262,6 +262,7 @@ onUnmounted(() => {
         animation: pulse-opacity 2s infinite ease-in-out;
         mix-blend-mode: normal;
         color: #000000; /* Difference with white makes it inverse of bg */
+        padding-bottom: 4px; /* visual adjust: lift text up */
     }
 
     .scroll-arrow.left {
