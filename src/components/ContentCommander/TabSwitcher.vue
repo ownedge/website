@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { ref, watch, onMounted, nextTick, onUnmounted } from 'vue';
 
 const props = defineProps({
   tabs: { type: Array, required: true },
@@ -9,6 +9,9 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 const tabRefs = ref([]);
 const indicatorStyle = ref({});
+const tabBarRef = ref(null);
+const showLeftArrow = ref(false);
+const showRightArrow = ref(false);
 
 const selectTab = (index) => {
   emit('select', index);
@@ -29,41 +32,100 @@ const updateIndicator = () => {
             width: `${activeTab.offsetWidth}px`,
             opacity: 1
         };
+        
+        // Auto-scroll into view on mobile
+        if (tabBarRef.value && window.innerWidth <= 900) {
+             const container = tabBarRef.value;
+             const tabLeft = activeTab.offsetLeft;
+             const tabWidth = activeTab.offsetWidth;
+             const containerWidth = container.clientWidth;
+             const scrollLeft = container.scrollLeft;
+             
+             if (tabLeft < scrollLeft || (tabLeft + tabWidth) > (scrollLeft + containerWidth)) {
+                 container.scrollTo({
+                     left: tabLeft - (containerWidth / 2) + (tabWidth / 2),
+                     behavior: 'smooth'
+                 });
+             }
+        }
+    }
+};
+
+const checkScroll = () => {
+    if (!tabBarRef.value) return;
+    const el = tabBarRef.value;
+    // Check if scrollable
+    if (el.scrollWidth > el.clientWidth) {
+        showLeftArrow.value = el.scrollLeft > 5; // buffer
+        showRightArrow.value = (el.scrollLeft + el.clientWidth) < (el.scrollWidth - 5);
+    } else {
+        showLeftArrow.value = false;
+        showRightArrow.value = false;
     }
 };
 
 watch(() => props.activeIndex, () => {
-    nextTick(updateIndicator);
+    nextTick(() => {
+        updateIndicator();
+        /* small delay for scroll updates */
+        setTimeout(checkScroll, 300); 
+    });
 });
 
 onMounted(() => {
     // Wait for layout
-    setTimeout(updateIndicator, 100);
+    setTimeout(() => {
+        updateIndicator();
+        checkScroll();
+    }, 100);
     window.addEventListener('resize', updateIndicator);
+    window.addEventListener('resize', checkScroll);
+    if (tabBarRef.value) {
+        tabBarRef.value.addEventListener('scroll', checkScroll);
+    }
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateIndicator);
+    window.removeEventListener('resize', checkScroll);
+    if (tabBarRef.value) {
+        tabBarRef.value.removeEventListener('scroll', checkScroll);
+    }
 });
 </script>
 
 <template>
-  <div class="tui-tab-bar">
-      <div class="active-indicator" :style="indicatorStyle"></div>
-      <div 
-        v-for="(tab, index) in tabs" 
-        :key="tab.id"
-        :ref="el => tabRefs[index] = el"
-        class="tui-tab"
-        :class="{ active: activeIndex === index }"
-        @click="selectTab(index)"
-        @keydown="(e) => handleTabKeydown(e, index)"
-        tabindex="0"
-        role="tab"
-        :aria-selected="activeIndex === index"
-      >
-        <span class="tab-name">{{ tab.name }}</span>
+  <div class="tab-container">
+      <div class="scroll-arrow left" v-if="showLeftArrow">◄</div>
+      <div ref="tabBarRef" class="tui-tab-bar">
+          <div class="active-indicator" :style="indicatorStyle"></div>
+          <div 
+            v-for="(tab, index) in tabs" 
+            :key="tab.id"
+            :ref="el => tabRefs[index] = el"
+            class="tui-tab"
+            :class="{ active: activeIndex === index }"
+            @click="selectTab(index)"
+            @keydown="(e) => handleTabKeydown(e, index)"
+            tabindex="0"
+            role="tab"
+            :aria-selected="activeIndex === index"
+          >
+            <span class="tab-name">{{ tab.name }}</span>
+          </div>
       </div>
+      <div class="scroll-arrow right" v-if="showRightArrow">►</div>
   </div>
 </template>
 
 <style scoped>
+.tab-container {
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .tui-tab-bar {
     display: flex;
     padding: 0;
@@ -130,12 +192,18 @@ onMounted(() => {
     font-weight: bold;
     letter-spacing: 1px;
 }
+
+.scroll-arrow {
+    display: none;
+}
+
 @media (max-width: 900px) {
     .tui-tab-bar {
         overflow-x: auto;
         padding-bottom: 5px; /* Space for scrollbar if any */
         height: 50px;
         scrollbar-width: none;
+        scroll-behavior: smooth; /* Enable smooth scrolling */
     }
 
     .tui-tab-bar::-webkit-scrollbar {
@@ -172,6 +240,39 @@ onMounted(() => {
         background: #fff;
         height: 40px; /* Match mobile tab height */
         min-width: 20px; /* Ensure some extension even if cramped */
+    }
+
+    /* Scroll Indicators */
+    @keyframes pulse-opacity {
+        0%, 100% { opacity: 0.15; }
+        50% { opacity: 0.95; }
+    }
+
+    .scroll-arrow {
+        display: flex;
+        justify-content: center;
+        font-size: 1.9rem;
+        color: #ffffff;
+        mix-blend-mode: difference;
+        background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(7px);
+        width: 20px;
+        height: 40px;
+        position: absolute;
+        top: 5px; /* Adjust to vertical center of tabs */
+        z-index: 20;
+        pointer-events: none; /* Let touches pass through */
+        animation: pulse-opacity 2s infinite ease-in-out;
+    }
+
+    .scroll-arrow.left {
+         left: 0;
+         background: linear-gradient(to right, rgba(0,0,0,0.9), transparent);
+    }
+
+    .scroll-arrow.right {
+         right: 0;
+         background: linear-gradient(to left, rgba(0,0,0,0.9), transparent);
     }
 }
 </style>

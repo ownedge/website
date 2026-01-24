@@ -372,6 +372,13 @@ const handleGlobalKeydown = (e) => {
 
   // 2. Handle Skip/Reboot early (Safari Fix)
   if (isEscape) {
+      // Priority 0: Close Virtual Keyboard if open
+      if (keyboardStore.isVisible.value) {
+          keyboardStore.close();
+          e.preventDefault();
+          return;
+      }
+
       if (!isBooted.value) {
           // If NOT booted, Escape ALWAYS skips the BIOS/Dialup sequence
           e.preventDefault();
