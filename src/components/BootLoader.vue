@@ -155,8 +155,12 @@ const handleMobileInput = (e) => {
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
-    // Ignore if typing in the hidden input (handled by @input)
-    if (e.target.tagName === 'INPUT') return;
+    // If typing in the hidden input, ignore CHARACTERS (handled by @input)
+    // but allow Backspace, Enter, and Arrows to pass through.
+    if (e.target.tagName === 'INPUT') {
+        const isControlKey = ['Backspace', 'Enter', 'ArrowLeft', 'ArrowRight', 'Left', 'Right'].includes(e.key);
+        if (!isControlKey) return; 
+    }
     
     // Navigation
     if (e.key === 'ArrowRight' || e.key === 'Right') {
