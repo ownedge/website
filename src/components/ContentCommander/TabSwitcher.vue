@@ -267,12 +267,10 @@ onUnmounted(() => {
 
     .scroll-arrow.left {
          left: 0;
-         background: linear-gradient(to right, rgba(0,0,0,0.9), transparent);
     }
 
     .scroll-arrow.right {
          right: 0;
-         background: linear-gradient(to left, rgba(0,0,0,0.9), transparent);
     }
 }
 </style>
