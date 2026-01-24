@@ -107,6 +107,10 @@ onMounted(() => {
     z-index: 5;
 }
 
+.tui-tab:focus {
+    outline: none; /* Remove default browser blue outline */
+}
+
 .active-indicator {
     position: absolute;
     bottom: 0;
