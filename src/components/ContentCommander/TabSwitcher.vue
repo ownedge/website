@@ -244,18 +244,14 @@ onUnmounted(() => {
 
     /* Scroll Indicators */
     @keyframes pulse-opacity {
-        0%, 100% { opacity: 0.15; }
-        50% { opacity: 0.95; }
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.35; }
     }
 
     .scroll-arrow {
         display: flex;
         justify-content: center;
         font-size: 1.9rem;
-        color: #ffffff;
-        mix-blend-mode: difference;
-        background: rgba(0,0,0,0.9);
-        backdrop-filter: blur(7px);
         width: 20px;
         height: 40px;
         position: absolute;
@@ -263,14 +259,19 @@ onUnmounted(() => {
         z-index: 20;
         pointer-events: none; /* Let touches pass through */
         animation: pulse-opacity 2s infinite ease-in-out;
+        mix-blend-mode: difference;
+        backdrop-filter: blur(8px);
+        color: #fff; /* Difference with white makes it inverse of bg */
     }
 
     .scroll-arrow.left {
          left: 0;
+         background: linear-gradient(to right, rgba(0,0,0,0.9), transparent);
     }
 
     .scroll-arrow.right {
          right: 0;
+         background: linear-gradient(to left, rgba(0,0,0,0.9), transparent);
     }
 }
 </style>
