@@ -8,17 +8,32 @@ const isShiftActive = ref(false);
 const baseRows = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '-', '_'],
-    ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ':', '(', ')']
+    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', '!'],
+    ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '-']
 ];
+
+const symbolMap = {
+    ',': ';',
+    '.': ':',
+    '-': '_',
+    '?': '(',
+    '!': ')'
+};
 
 const rows = computed(() => {
     return baseRows.map(row => row.map(char => {
-        // Only uppercase/lowercase letters
-        if (/[a-zA-Z]/.test(char)) {
-            return isShiftActive.value ? char.toUpperCase() : char.toLowerCase();
+        if (isShiftActive.value) {
+            // Handle letters
+            if (/[a-zA-Z]/.test(char)) {
+                return char.toUpperCase();
+            }
+            // Handle symbols
+            if (symbolMap[char]) {
+                return symbolMap[char];
+            }
         }
-        return char;
+        // Default (lowercase letters or base symbols)
+        return /[a-zA-Z]/.test(char) ? char.toLowerCase() : char;
     }));
 });
 
@@ -72,7 +87,7 @@ const handleClose = () => {
                          :class="{ 'active': isShiftActive }"
                          @click.stop="toggleShift"
                     >
-                        ⬆
+                        ⬆&#xFE0E;
                     </button>
 
                     <button 
@@ -90,7 +105,7 @@ const handleClose = () => {
                 <!-- Bottom Action Row -->
                 <div class="kb-row actions">
                    <button class="kb-key action-key wide" @click.stop="handleSpace">SPACE</button>
-                   <button class="kb-key action-key" @click.stop="handleBackspace">DEL</button>
+                   <button class="kb-key action-key" style="font-size: 1.5rem;" @click.stop="handleBackspace">⌫</button>
                    <button class="kb-key action-key enter" @click.stop="handleEnter">ENTER ⏎</button>
                 </div>
             </div>
@@ -189,9 +204,10 @@ const handleClose = () => {
 }
 
 .shift-key {
+    font-size: 1rem;
     background: #222;
     border-color: #444;
-    color: #888;
+    color: #d7d7d7;
     max-width: 45px; /* Same max as keys */
 }
 
