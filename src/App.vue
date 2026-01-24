@@ -893,6 +893,8 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 .crt-wrapper {
   width: 100vw;
   height: 100vh;
+  /* Use dvh for mobile browsers if supported */
+  height: 100dvh; 
   background-color: #050505;
   display: flex;
   align-items: center;
@@ -1174,6 +1176,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         box-shadow: none;
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
     }
 
     .app-container {
@@ -1184,10 +1187,14 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 
     .scroll-content {
         height: 100%;
+        /* Ensure snappy behavior */
+        scroll-padding-top: 0; 
     }
 
     .hero-section {
-        height: 100%; /* No peek on mobile to maximize content */
+        /* Peek the menu bar (50px) at the bottom */
+        height: calc(100% - 55px); 
+        min-height: calc(100% - 55px);
     }
 }
 </style>
