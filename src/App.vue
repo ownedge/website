@@ -1160,7 +1160,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 /* Mobile Responsiveness */
 @media screen and (max-width: 900px) {
     .crt-wrapper {
-        padding: 0;
+        padding: 4px; /* Thin frame/safe area */
         background: #000;
     }
 
@@ -1178,12 +1178,12 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
     }
 
     .crt-screen {
-        border-radius: 0;
-        border: none;
+        border-radius: 5px; /* Subtle rounding */
+        border: 0.5px solid #222; /* Define the container edge */
         box-shadow: none;
-        width: 100vw;
-        height: 100vh;
-        height: 100dvh;
+        width: 100%;
+        height: 100%;
+        /* No fixed 100vh here, parent wrapper controls size via padding */
     }
 
     .app-container {

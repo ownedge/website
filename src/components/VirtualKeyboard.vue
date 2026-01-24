@@ -72,7 +72,7 @@ const handleClose = () => {
                          :class="{ 'active': isShiftActive }"
                          @click.stop="toggleShift"
                     >
-                        ⇧
+                        ⬆
                     </button>
 
                     <button 

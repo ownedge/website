@@ -666,6 +666,9 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
 @media (max-width: 900px) {
     .irc-container {
         grid-template-columns: 1fr; /* Hide sidebar list */
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
     }
     .irc-sidebar {
         display: none !important;

@@ -253,6 +253,11 @@ onUnmounted(() => {
         scrollbar-width: none;
     }
 
+    /* FULL WIDTH CHAT ON MOBILE */
+    .tui-viewport.no-overflow {
+        padding: 0 !important;
+    }
+
     .tui-viewport::-webkit-scrollbar {
         display: none;
     }
