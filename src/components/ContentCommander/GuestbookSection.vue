@@ -136,6 +136,11 @@ const handleSubmit = async () => {
                 isModalOpen.value = false;
                 showSuccess.value = false;
                 newEntry.value = { name: '', message: '', rating: 5 };
+                
+                // Close virtual keyboard if open
+                if (window.innerWidth <= 900) {
+                    keyboardStore.close();
+                }
             }, 2000);
         }
     } catch (err) {
