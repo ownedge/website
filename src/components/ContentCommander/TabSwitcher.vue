@@ -159,5 +159,15 @@ onMounted(() => {
     .tab-name {
         font-size: 0.75rem;
     }
+    
+    /* Extend Menu Bar to Right Edge on Mobile */
+    .tui-tab-bar::after {
+        content: '';
+        display: block;
+        flex: 1;
+        background: #fff;
+        height: 40px; /* Match mobile tab height */
+        min-width: 20px; /* Ensure some extension even if cramped */
+    }
 }
 </style>

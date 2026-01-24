@@ -11,6 +11,8 @@ import BezelReflection from './components/BezelReflection.vue'
 import GlitchEffects from './components/GlitchEffects.vue'
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { chatStore } from './store/chatStore';
+import { keyboardStore } from './store/keyboardStore';
+import VirtualKeyboard from './components/VirtualKeyboard.vue';
 
 
 let cursorInterval = null;
@@ -806,6 +808,8 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         </div>
     </div>
     
+
+
     <!-- VFD Display (Extracted to component) -->
     <VfdDisplay 
         class="vfd-display"
@@ -845,7 +849,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         </div>
 
         <!-- Scrollable Content -->
-        <div class="scroll-content" v-if="isBooted" @scroll.passive="handleScroll" @mousedown="startSelection">
+        <div class="scroll-content" :class="{ 'keyboard-open': keyboardStore.isVisible.value && isMobile }" v-if="isBooted" @scroll.passive="handleScroll" @mousedown="startSelection">
           <section class="page-section hero-section" :style="heroStyle">
             <HeroDisplay />
           </section>
@@ -863,13 +867,16 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         <!-- Fixed Foreground Overlays -->
         <div class="scanlines"></div>
         <div class="vignette"></div>
+
+        <!-- Global Virtual Keyboard (Mobile Only) -->
+        <VirtualKeyboard />
       </div>
     </div>
     
     <!-- Bezel Reflection Overlay (Tracker Text only) -->
     <TrackerOverlay 
       class="bezel-reflection-text" 
-      style="z-index: 100;" 
+      style="z-index: 100; pointer-events: none;" 
       :reflection-only="true" 
       :screen-rect="screenRect" 
     />
@@ -1189,6 +1196,11 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         height: 100%;
         /* Ensure snappy behavior */
         scroll-padding-top: 0; 
+        transition: height 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .scroll-content.keyboard-open {
+        height: calc(100% - 240px);
     }
 
     .hero-section {

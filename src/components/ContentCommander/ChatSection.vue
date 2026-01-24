@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import SoundManager from '../../sfx/SoundManager';
 import { chatStore } from '../../store/chatStore';
+import { keyboardStore } from '../../store/keyboardStore';
 
 const message = ref('');
 const messageInput = ref(null);
@@ -9,6 +10,8 @@ const logContainer = ref(null);
 const isValidNickname = computed(() => chatStore.nickname.trim().length >= 3);
 
 const focusInput = async () => {
+    if (window.innerWidth <= 900) return; // Don't focus on mobile to avoid native keyboard
+
     // Retry focus a few times to account for rendering/animation.
     for (let i = 0; i < 3; i++) {
         await nextTick();
@@ -79,6 +82,28 @@ const handleCommand = (cmd) => {
         });
     }
     scrollToBottom();
+};
+
+const openVirtualKeyboard = () => {
+    if (window.innerWidth > 900) return;
+    
+    keyboardStore.open((key) => {
+        if (key === 'BACKSPACE') {
+            message.value = message.value.slice(0, -1);
+        } else if (key === 'ENTER') {
+           handleSend();
+        } else {
+             message.value += key;
+        }
+    });
+};
+
+const handleInputClick = () => {
+    if (window.innerWidth <= 900) {
+        openVirtualKeyboard();
+    } else {
+        messageInput.value?.focus();
+    }
 };
 
 // Auto-scroll when new messages arrive or history is cleared
@@ -268,7 +293,12 @@ onMounted(() => {
     if (chatStore.isConnected) {
         chatStore.startPolling();
         scrollToBottom();
-        setTimeout(focusInput, 500);
+        // Auto-open keyboard on mobile
+        if (window.innerWidth <= 900) {
+            setTimeout(openVirtualKeyboard, 500);
+        } else {
+            setTimeout(focusInput, 500);
+        }
         
         // Initialize Map
         initMap();
@@ -277,6 +307,10 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (animationId) cancelAnimationFrame(animationId);
+    // Ensure keyboard closes if on mobile
+    if (window.innerWidth <= 900) {
+        keyboardStore.close();
+    }
 });
 
 const formatTime = (isoString) => {
@@ -288,6 +322,33 @@ const formatTime = (isoString) => {
         hour12: false 
     });
 };
+const showMobileUsers = ref(false);
+
+const toggleMobileUsers = () => {
+    showMobileUsers.value = !showMobileUsers.value;
+    SoundManager.playTypingSound();
+};
+
+const displayedUsers = computed(() => {
+    try {
+        const selfNick = chatStore.chatNickname || chatStore.nickname || 'Guest';
+        const usersList = Array.isArray(chatStore.users) ? chatStore.users : [];
+        const others = usersList
+            .filter(u => u && u.nickname)
+            .map(u => u.nickname);
+            
+        const allUsers = [selfNick, ...others];
+        
+        // Safety check
+        if (allUsers.length === 0) return 'USERS: (0)';
+        
+        return `USERS: ${allUsers.join(', ')}`;
+    } catch (e) {
+        console.error("Error formatting users:", e);
+        return "USERS";
+    }
+});
+const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.innerWidth <= 900);
 </script>
 
 <template>
@@ -304,6 +365,9 @@ const formatTime = (isoString) => {
             <span class="topic">"{{ chatStore.topic.text }}"</span>
             <span class="topic-meta">set by {{ chatStore.topic.author }} on {{ chatStore.topic.modified }}</span>
             <span v-if="!chatStore.isServerOnline" class="server-status">[OFFLINE]</span>
+          </div>
+          <div class="mobile-users-toggle" @click="toggleMobileUsers">
+            {{ displayedUsers }}
           </div>
         </div>
         <div class="irc-log" ref="logContainer">
@@ -322,8 +386,12 @@ const formatTime = (isoString) => {
           </div>
         </div>
         <div class="irc-input-row">
-        <div class="input-wrapper">
+        <div class="input-wrapper" @click="handleInputClick">
+          <div v-if="isVirtualMode" class="virtual-input-display">
+            {{ message }}<span class="cursor-block">_</span>
+          </div>
           <input 
+            v-else
             ref="messageInput"
             v-model="message" 
             type="text" 
@@ -334,8 +402,11 @@ const formatTime = (isoString) => {
         </div>
       </div>
       </div>
-      <div class="irc-sidebar">
-        <div class="sidebar-header">USERS [{{ chatStore.users.length + 1 }}]</div>
+      <div class="irc-sidebar" :class="{ 'active': showMobileUsers }">
+        <div class="sidebar-header">
+            USERS [{{ chatStore.users.length + 1 }}]
+            <span class="close-sidebar" @click="toggleMobileUsers">x</span>
+        </div>
         <div class="user-list">
           <div class="user-item self">{{ chatStore.chatNickname || chatStore.nickname }}</div>
           <div v-for="u in chatStore.users" :key="u.nickname" class="user-item">{{ u.nickname }}</div>
@@ -344,6 +415,85 @@ const formatTime = (isoString) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* ... existing styles ... */
+.mobile-users-toggle {
+    display: none;
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    padding: 2px 6px;
+    cursor: pointer;
+    background: rgba(64, 224, 208, 0.1);
+    
+    /* Truncation */
+    /* max-width: 150px; -- REMOVED */
+    width: 100%;
+    margin-top: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.close-sidebar {
+    display: none;
+    cursor: pointer;
+    float: right;
+    color: var(--color-accent);
+}
+
+/* ... existing styles ... */
+
+@media (max-width: 900px) {
+    /* ... existing ... */
+    
+    .irc-input-row input.virtual-mode {
+        pointer-events: none; /* Disable native interaction */
+        caret-color: transparent;
+        border-bottom: 1px solid var(--color-accent); /* Make it look like a line */
+    }
+}
+
+/* ... existing styles ... */
+
+@media (max-width: 900px) {
+    .irc-container {
+        grid-template-columns: 1fr; /* Hide sidebar list */
+        position: relative;
+    }
+    .irc-sidebar {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 100%;
+        background: #0a0a0a;
+        border-left: 1px solid #333;
+        z-index: 100;
+        padding-bottom: 20px;
+        box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+    }
+    .irc-sidebar.active {
+        display: flex !important;
+    }
+    
+    .mobile-users-toggle {
+        display: block;
+    }
+    
+    .close-sidebar {
+        display: inline-block;
+    }
+
+    /* ... other existing overrides ... */
+    .irc-header .topic {
+        display: none !important; /* Hide topic for space */
+    }
+    /* ... */
+}
+</style>
 
 <style scoped>
 .section-content h3 {
@@ -547,5 +697,35 @@ const formatTime = (isoString) => {
     .irc-log::-webkit-scrollbar {
         display: none;
     }
+    
+    /* Hide caret on mobile for "terminal" feel with virtual keyboard */
+    input[readonly] {
+        caret-color: transparent;
+    }
+    
+    .virtual-input-display {
+        width: 100%;
+        background: transparent;
+        color: #fff;
+        font-family: 'Microgramma', sans-serif;
+        font-size: 0.9rem;
+        padding: 0 10px;
+        letter-spacing: 0.5px;
+        min-height: 20px;
+        pointer-events: none; /* Let wrapper click open keyboard */
+        border-bottom: 2px solid var(--color-accent);
+    }
+    
+    .cursor-block {
+        display: inline-block;
+        width: 10px;
+        height: 1.2em;
+        background: var(--color-accent); /* transparent block for now since user wants chars one by one */
+        margin-left: 2px;
+        animation: blink 1s step-end infinite;
+        vertical-align: bottom;
+    }
+    
+    @keyframes blink { 50% { opacity: 0; } }
 }
 </style>

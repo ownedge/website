@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue';
 import SoundManager from '../../sfx/SoundManager';
 import { chatStore } from '../../store/chatStore';
+import { keyboardStore } from '../../store/keyboardStore';
 
 const entries = ref([]);
 const isModalOpen = ref(false);
@@ -45,6 +46,10 @@ const openModal = () => {
 
 const closeModal = () => {
     isModalOpen.value = false;
+    // Ensure keyboard closes if on mobile
+    if (window.innerWidth <= 900) {
+        keyboardStore.close();
+    }
 };
 
 const setRating = (val) => {
@@ -53,15 +58,54 @@ const setRating = (val) => {
 };
 
 const focusInput = () => {
-    nextTick(() => {
-        if (messageInput.value) {
-            messageInput.value.focus();
+    // Only focus if NOT mobile, otherwise we keep virtual keyboard
+    if (window.innerWidth > 900) {
+        nextTick(() => {
+            if (messageInput.value) {
+                messageInput.value.focus();
+            }
+        });
+    }
+};
+
+const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.innerWidth <= 900);
+
+const openVirtualKeyboard = () => {
+    // Only on mobile
+    if (window.innerWidth > 900) return;
+    
+    keyboardStore.open((key) => {
+        if (key === 'BACKSPACE') {
+            newEntry.value.message = newEntry.value.message.slice(0, -1);
+        } else if (key === 'ENTER') {
+            handleSubmit();
+            keyboardStore.close(); // Explicitly close since modal closes
+        } else {
+             if (newEntry.value.message.length < 256) {
+                 newEntry.value.message += key;
+             }
         }
     });
 };
 
+const handleInputClick = () => {
+    if (window.innerWidth <= 900) {
+        if (!keyboardStore.isVisible.value) {
+           openVirtualKeyboard();
+        }
+    } else {
+        focusInput();
+    }
+};
+
 watch(isModalOpen, (newVal) => {
-    if (newVal) focusInput();
+    if (newVal) {
+        if (window.innerWidth <= 900) {
+            setTimeout(openVirtualKeyboard, 300);
+        } else {
+            focusInput();
+        }
+    }
 });
 
 const handleSubmit = async () => {
@@ -196,14 +240,18 @@ onUnmounted(() => {
 
             <div class="form-group">
                 <label>FEEDBACK (MAX 256):</label>
-                <div class="input-wrapper focus-locked">
+                <div class="input-wrapper focus-locked" @click="handleInputClick">
+                    <div v-if="isVirtualMode" class="virtual-input-display">
+                        {{ newEntry.message }}<span class="cursor-block">_</span>
+                    </div>
                     <input 
+                      v-else
                       ref="messageInput"
                       v-model="newEntry.message" 
                       type="text" 
                       maxlength="256" 
                       placeholder="type message..."
-                      @blur="focusInput"
+                      :readonly="keyboardStore.isVisible.value && window.innerWidth <= 900" 
                     />
                 </div>
             </div>
@@ -413,7 +461,7 @@ onUnmounted(() => {
     font-size: 0.7rem;
     color: #000;
     cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Microgramma', monospace;
     letter-spacing: 1px;
     padding: 0 5px;
     background: rgba(0, 0, 0, 0.1);
@@ -548,5 +596,35 @@ onUnmounted(() => {
         font-size: 0.9rem;
         margin-bottom: 20px;
     }
+    
+    /* Hide caret on mobile for "terminal" feel with virtual keyboard */
+    input[readonly] {
+        caret-color: transparent;
+    }
+    
+    .virtual-input-display {
+        width: 100%;
+        background: #111;
+        border: 1px solid #333;
+        color: #fff;
+        font-family: 'Microgramma', sans-serif;
+        font-size: 0.95rem;
+        padding: 12px;
+        min-height: 43px;
+        pointer-events: none; /* Let wrapper click open keyboard */
+        border-bottom: 2px solid var(--color-accent);
+    }
+    
+    .cursor-block {
+        display: inline-block;
+        width: 10px;
+        height: 1.2em;
+        background: var(--color-accent);
+        margin-left: 2px;
+        animation: blink 1s step-end infinite;
+        vertical-align: bottom;
+    }
+    
+    @keyframes blink { 50% { opacity: 0; } }
 }
 </style>

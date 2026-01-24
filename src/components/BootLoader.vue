@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import SoundManager from '../sfx/SoundManager';
 import { chatStore } from '../store/chatStore';
+import { keyboardStore } from '../store/keyboardStore';
 
 const videoRef = ref(null);
 const canvasRef = ref(null);
@@ -62,7 +63,7 @@ const VISUALIZATION_CONFIG = {
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ";
 const lastCharIndex = ref(0);
-const hiddenInput = ref(null);
+// const hiddenInput = ref(null); -- Removed
 
 const addNicknameChar = (key) => {
     if (nicknameChars.value.length >= 8) return;
@@ -129,38 +130,45 @@ const addNicknameChar = (key) => {
 };
 
 const triggerKeyboard = () => {
-    if (hiddenInput.value) {
-        hiddenInput.value.focus();
-        // Optional: Reset value to ensure clean state
-        hiddenInput.value.value = '';
-    }
+    // Open Global Virtual Keyboard
+    keyboardStore.open((key) => {
+        if (key === 'BACKSPACE') {
+             if (nicknameChars.value.length > 0) {
+                nicknameChars.value.pop();
+                if (nicknameChars.value.length > 0) {
+                    const last = nicknameChars.value[nicknameChars.value.length - 1];
+                    lastCharIndex.value = CHARS.indexOf(last.final);
+                } else {
+                    lastCharIndex.value = 0;
+                }
+            }
+        } else if (key === 'ENTER') {
+           // Do nothing or confirm?
+           keyboardStore.close(); 
+           handleConnect();
+        } else if (key === ' ') {
+            // Space
+             if (/[a-zA-Z0-9\-_ ]/.test(key)) {
+                addNicknameChar(key);
+            }
+        } else {
+             if (/[a-zA-Z0-9\-_ ]/.test(key)) {
+                addNicknameChar(key);
+            }
+        }
+    }, () => {
+        // On Close callback if needed
+    });
 };
 
-const handleMobileInput = (e) => {
-    const val = e.target.value;
-    if (!val) return;
-    
-    // Get the last character typed
-    const char = val.slice(-1);
-    
-    // Reset input to avoid clutter, but keep focus
-    e.target.value = '';
-    
-    // Pass to standard handler logic
-    if (/[a-zA-Z0-9\-_ ]/.test(char)) {
-        addNicknameChar(char);
-    }
-};
+/* Removed old handleMobileInput */
 
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
     // If typing in the hidden input, ignore CHARACTERS (handled by @input)
     // but allow Backspace, Enter, and Arrows to pass through.
-    if (e.target.tagName === 'INPUT') {
-        const isControlKey = ['Backspace', 'Enter', 'ArrowLeft', 'ArrowRight', 'Left', 'Right'].includes(e.key);
-        if (!isControlKey) return; 
-    }
+    // if (e.target.tagName === 'INPUT') ... -- Removed as we don't use hidden input anymore
     
     // Navigation
     if (e.key === 'ArrowRight' || e.key === 'Right') {
@@ -312,14 +320,15 @@ const runBiosSequence = async () => {
                 await new Promise(r => setTimeout(r, 150));
             }
         }
+        // Open keyboard after auto-typing for confirmation/editing
+        if (window.innerWidth <= 900) {
+            triggerKeyboard();
+        }
     } else {
-        // If no stored nickname, force focus on hidden input for mobile users
-        // Use a slight delay to ensure the modal transition is done
-        setTimeout(() => {
-            if (hiddenInput.value && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
-                hiddenInput.value.focus();
-            }
-        }, 1000);
+        // If no stored nickname, open virtual keyboard on mobile
+        if (window.innerWidth <= 900) {
+            setTimeout(triggerKeyboard, 1000); // Delay for popup transition
+        }
     }
 };
 
@@ -401,6 +410,11 @@ const handleConnect = async () => {
     chatStore.showPopup = false;
     await chatStore.init();
 
+    // Close keyboard if open (mobile)
+    if (window.innerWidth <= 900) {
+        keyboardStore.close();
+    }
+
     setTimeout(() => {
         emit('start');
     }, 800);
@@ -408,6 +422,10 @@ const handleConnect = async () => {
 
 const handleSkip = () => {
     window.removeEventListener('keydown', handleIntroKeydown);
+    // Close keyboard if open (mobile)
+    if (window.innerWidth <= 900) {
+        keyboardStore.close();
+    }
     emit('skip');
 };
 
@@ -489,7 +507,8 @@ onMounted(() => {
   if (savedNick) {
       chatStore.nickname = savedNick;
   }
-
+  
+  // Pre-load SoundManager? No, wait for user interaction or auto-sequence if possible.
   if (!props.isBooted) {
     runBiosSequence();
   }
@@ -541,9 +560,6 @@ onUnmounted(() => {
                         <div class="char-grid-container" @click="triggerKeyboard">
                             <div class="char-label">
                                 NICKNAME 
-                                <div class="mobile-keyboard-btn" @click.stop="triggerKeyboard">
-                                    <span class="kb-icon">⌨</span> KEYBOARD
-                                </div>
                             </div>
                             <div class="char-grid">
                                 <div 
@@ -591,17 +607,6 @@ onUnmounted(() => {
                             >NO</div>
                         </div>
                         
-                        <!-- Hidden Input for Mobile Keyboard -->
-                        <input 
-                            ref="hiddenInput"
-                            type="text" 
-                            class="mobile-input-trap" 
-                            autocomplete="off" 
-                            autocorrect="off" 
-                            autocapitalize="off" 
-                            spellcheck="false"
-                            @input="handleMobileInput"
-                        />
                     </div>
 
                     <div v-else-if="bootStage === 'connecting'" class="connection-status" key="connecting">
@@ -709,7 +714,7 @@ onUnmounted(() => {
     font-size: 0.7rem;
     color: #000;
     cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Microgramma', monospace;
     letter-spacing: 1px;
     padding: 0 5px;
     background: rgba(0, 0, 0, 0.1);
