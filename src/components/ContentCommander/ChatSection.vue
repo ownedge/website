@@ -501,9 +501,11 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     color: var(--color-accent);
     border-bottom: 1px solid rgba(64, 224, 208, 0.3);
     display: inline-block;
+    padding-top: 10px;
+    padding-left: 10px;
     padding-bottom: 5px;
     margin-bottom: 20px;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     letter-spacing: 1px;
     align-self: flex-start;
 }

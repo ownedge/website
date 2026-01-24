@@ -311,7 +311,7 @@ onUnmounted(() => {
     border-bottom: 1px solid rgba(64, 224, 208, 0.3);
     display: inline-block;
     padding-bottom: 5px;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     letter-spacing: 1px;
 }
 

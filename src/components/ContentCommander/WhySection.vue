@@ -47,7 +47,7 @@
     display: inline-block;
     padding-bottom: 5px;
     margin-bottom: 20px;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     letter-spacing: 1px;
 }
 
