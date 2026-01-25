@@ -82,6 +82,10 @@ const selectPost = async (id, isInitial = false) => {
     sessionStorage.setItem('last_blog_post_id', id);
     if (!isInitial) SoundManager.playTypingSound();
 
+    // Check Like Status
+    const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '[]');
+    hasLiked.value = likedPosts.includes(id);
+
     // Update Browser URL (Clean Routing)
     // Only if we aren't already on this path
     const currentPath = window.location.pathname;
@@ -122,13 +126,27 @@ const selectPost = async (id, isInitial = false) => {
     }
 };
 
+const hasLiked = ref(false);
+
 const giveKudo = async () => {
     if (!activePostId.value) return;
+    
+    // Check Local Storage
+    const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '[]');
+    if (likedPosts.includes(activePostId.value)) {
+        return; // Already liked
+    }
+    
     SoundManager.playTypingSound();
     try {
         const res = await fetch(`/api/blog.php?action=kudo&id=${activePostId.value}`);
         if (res.ok) {
             postStats.value = await res.json();
+            
+            // Save to Local Storage
+            likedPosts.push(activePostId.value);
+            localStorage.setItem('liked_posts', JSON.stringify(likedPosts));
+            hasLiked.value = true;
         }
     } catch (e) {
         console.error('Failed to give kudo', e);
@@ -242,10 +260,10 @@ onUnmounted(() => {
                         <span class="stat-label">VIEWS</span>
                         <span class="stat-value">{{ postStats.views }}</span>
                     </div>
-                    <div class="stat-item interactive" @click="giveKudo">
+                    <div class="stat-item interactive" @click="giveKudo" :class="{ disabled: hasLiked }">
                         <span class="stat-label">KUDOS</span>
                         <div class="kudos-wrapper">
-                            <span class="kudos-icon">♥</span>
+                            <span class="kudos-icon" :class="{ liked: hasLiked }">♥</span>
                             <span class="stat-value">{{ postStats.kudos }}</span>
                         </div>
                     </div>
@@ -430,16 +448,30 @@ onUnmounted(() => {
     transform: scale(0.95);
 }
 
+.stat-item.interactive.disabled {
+    cursor: default;
+    opacity: 0.8;
+}
+
+.stat-item.interactive.disabled:active {
+    transform: none;
+}
+
 .kudos-wrapper {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; 
     align-items: center;
     gap: 2px;
 }
 
 .kudos-icon {
     font-size: 1.2rem;
-    color: #ff4444;
+    color: #666; /* Default Grey */
+    transition: color 0.3s ease;
+}
+
+.kudos-icon.liked {
+    color: #ff4444; /* Red when liked */
 }
 
 .stat-icon {
