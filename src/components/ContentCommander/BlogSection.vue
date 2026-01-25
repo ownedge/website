@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import SoundManager from '../../sfx/SoundManager';
 
 const posts = ref([]);
@@ -11,6 +11,23 @@ const error = ref(null);
 import { inject } from 'vue';
 
 const activePost = computed(() => posts.value.find(p => p.id === activePostId.value));
+const isTitleOverflowing = ref(false);
+
+const checkTitleOverflow = async () => {
+    isTitleOverflowing.value = false;
+    await nextTick();
+    // Select the active title directly from DOM to avoid complex ref management in loop
+    const activeEl = document.querySelector('.menu-item.active .post-title');
+    if (activeEl) {
+        // Check if content width > container width (approx 110-120px)
+        // We compare scrollWidth (content) vs a fixed logical width for the mobile card
+        isTitleOverflowing.value = activeEl.scrollWidth > 110;
+    }
+};
+
+watch(activePostId, () => {
+   checkTitleOverflow(); 
+});
 
 // Injected from App.vue (if routing via /blog/:id)
 const injectedPostId = inject('initialBlogPostId', ref(null));
@@ -169,6 +186,8 @@ onMounted(() => {
     
     fetchIndex();
     window.addEventListener('keydown', handleKeydown, { capture: true });
+    // Check overflow after initial index load and render
+    setTimeout(checkTitleOverflow, 500); 
 });
 
 onUnmounted(() => {
@@ -195,7 +214,7 @@ onUnmounted(() => {
         >
           <span class="indicator">></span>
           <div class="post-info">
-            <span class="post-title">{{ post.title }}</span>
+            <span class="post-title" :class="{ marquee: activePostId === post.id && isTitleOverflowing }">{{ post.title }}</span>
             <span class="post-date">{{ post.date }}</span>
           </div>
         </div>
@@ -550,15 +569,22 @@ onUnmounted(() => {
         padding-right: 0;
         padding-bottom: 15px;
         overflow-x: auto;
-        gap: 20px;
+        gap: 10px; /* Gap between items */
         scrollbar-width: none;
     }
     
     .menu-item {
         flex-direction: column;
-        width: 140px;
+        width: 120px; /* Smaller reserved space */
         flex-shrink: 0;
-        padding: 5px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.05); /* Subtle background for separation */
+        border: 1px solid transparent;
+    }
+
+    .menu-item.active {
+        background: rgba(64, 224, 208, 0.1);
+        border: 1px solid rgba(64, 224, 208, 0.3);
     }
     
     .post-title {
@@ -573,8 +599,29 @@ onUnmounted(() => {
         display: none;
     }
     
-    .menu-item.active {
-        background: rgba(64, 224, 208, 0.1);
+    .post-info {
+        width: 100%;
+        overflow: hidden; /* Mask the marquee */
+    }
+
+    @keyframes marquee-dynamic {
+        0% { transform: translateX(0); opacity: 1; }
+        15% { transform: translateX(0); opacity: 1; } /* Read start */
+        65% { transform: translateX(calc(120px - 100%)); opacity: 1; } /* Scroll to end */
+        85% { transform: translateX(calc(120px - 100%)); opacity: 1; } /* Hold end */
+        90% { transform: translateX(calc(120px - 100%)); opacity: 0; } /* Fade out */
+        90.1% { transform: translateX(0); opacity: 0; } /* Snap back while invisible */
+        100% { transform: translateX(0); opacity: 1; } /* Fade in */
+    }
+
+    .menu-item.active .post-title.marquee {
+        width: fit-content; 
+        white-space: nowrap;
+        overflow: visible;
+        display: block; 
+        max-width: none;
+        animation: marquee-dynamic 6s linear infinite; 
+        padding-right: 20px; 
     }
 }
 </style>
