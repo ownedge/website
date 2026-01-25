@@ -131,15 +131,17 @@ routes.forEach(route => {
         content = content.replace(/<meta property="twitter:title" content=".*?" \/>/, `<meta property="twitter:title" content="${data.title}" />`);
         content = content.replace(/<meta property="twitter:description" content=".*?" \/>/, `<meta property="twitter:description" content="${data.description}" />`);
         
-        // Update URLs
-        content = content.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="https://ownedge.com/${route}" />`);
-        content = content.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://ownedge.com/${route}" />`);
-        content = content.replace(/<meta property="twitter:url" content=".*?" \/>/, `<meta property="twitter:url" content="https://ownedge.com/${route}" />`);
+        // Update URLs (Force trailing slash to avoid Nginx redirects)
+        content = content.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="https://ownedge.com/${route}/" />`);
+        content = content.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://ownedge.com/${route}/" />`);
+        content = content.replace(/<meta property="twitter:url" content=".*?" \/>/, `<meta property="twitter:url" content="https://ownedge.com/${route}/" />`);
     }
 
     const fallback = fallbackContent[route];
+    // Update nav links in fallback content too
     if (fallback) {
-        content = content.replace(/<main class="seo-content">[\s\S]*?<\/main>/, fallback);
+        let fixedFallback = fallback.replace(/href="\/(\w+)"/g, 'href="/$1/"');
+        content = content.replace(/<main class="seo-content">[\s\S]*?<\/main>/, fixedFallback);
     }
 
     // Write index.html to the directory
@@ -189,8 +191,8 @@ if (fs.existsSync(blogDir)) {
                 // Open Graph specific to post
                 postHtml = postHtml.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${meta.title}" />`);
                 postHtml = postHtml.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${meta.summary || meta.title}" />`);
-                postHtml = postHtml.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://ownedge.com/blog/${meta.id}" />`);
-                postHtml = postHtml.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="https://ownedge.com/blog/${meta.id}" />`);
+                postHtml = postHtml.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://ownedge.com/blog/${meta.id}/" />`);
+                postHtml = postHtml.replace(/<link rel="canonical" href=".*?" \/>/, `<link rel="canonical" href="https://ownedge.com/blog/${meta.id}/" />`);
                 
                 // TODO: Inject actual post content into fallback? 
                 // For now, allow Vue loop to handle rendering on mount.
@@ -214,13 +216,13 @@ const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
     <priority>1.0</priority>
   </url>
 ${routes.map(route => `  <url>
-    <loc>${baseUrl}/${route}</loc>
+    <loc>${baseUrl}/${route}/</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`).join('\n')}
 ${blogPosts.map(post => `  <url>
-    <loc>${baseUrl}/blog/${post.id}</loc>
+    <loc>${baseUrl}/blog/${post.id}/</loc>
     <lastmod>${post.date}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

@@ -546,27 +546,14 @@ const updateMetadata = (index) => {
     }
 };
 
-const routeMap = {
-  '/': 0,
-  '/what': 1,
-  '/why': 2,
-  '/blog': 3,
-  '/guestbook': 4,
-  '/chat': 5
-};
-
-const routePathByIndex = {
-  0: '/',
-  1: '/what',
-  2: '/why',
-  3: '/blog',
-  4: '/guestbook',
-  5: '/chat'
-};
-
 const updateUrlFromIndex = (index) => {
-    const path = routePathByIndex[index];
-    if (path && window.location.pathname !== path) {
+    const tabId = tabs[index]?.id;
+    if (!tabId) return;
+    
+    // Construct path: home -> /, others -> /id/
+    const path = tabId === 'home' ? '/' : `/${tabId}/`;
+    
+    if (window.location.pathname !== path) {
         history.pushState({ index }, '', path);
     }
 };
@@ -576,32 +563,38 @@ import { provide } from 'vue';
 provide('initialBlogPostId', initialBlogPostId);
 
 const updateIndexFromUrl = () => {
-    // Normalize path by removing trailing slash if exists (e.g. /chat/ -> /chat)
+    // Normalize path by removing trailing slash (e.g. /chat/ -> /chat)
     let path = window.location.pathname;
     if (path.length > 1 && path.endsWith('/')) {
         path = path.slice(0, -1);
     }
     
-    // Check for standard route map
-    const index = routeMap[path];
-    if (index !== undefined) {
-        if (index !== activeTabIndex.value) {
-            handleTabSelect(index);
+    // Parse ID from path (e.g. /what -> what)
+    // path is '' or '/' or '/what'
+    const pathId = path === '/' || path === '' ? 'home' : path.substring(1); // remove leading slash
+    
+    // 1. Check if path matches a main tab ID
+    const tabIndex = tabs.findIndex(t => t.id === pathId);
+    if (tabIndex !== -1) {
+        if (tabIndex !== activeTabIndex.value) {
+            handleTabSelect(tabIndex);
         }
         return;
     }
 
-    // Check for Blog Deep Link (e.g. /blog/my-post)
+    // 2. Check for Blog Deep Link (e.g. /blog/my-post)
     if (path.startsWith('/blog/')) {
         const parts = path.split('/');
-        // path is like /blog/my-post or /blog/my-post/
+        // path is like /blog/my-post
         // parts: ['', 'blog', 'my-post']
         if (parts.length >= 3) {
             const blogId = parts[2];
             if (blogId) {
                 initialBlogPostId.value = blogId; // Provide to BlogSection
-                handleTabSelect(3); // Blog Tab Index
-                // Do NOT call history.pushState here, we want to keep the current detailed URL
+                
+                // Find index of 'blog' tab strictly
+                const blogTabIndex = tabs.findIndex(t => t.id === 'blog');
+                if (blogTabIndex !== -1) handleTabSelect(blogTabIndex);
                 return;
             }
         }
