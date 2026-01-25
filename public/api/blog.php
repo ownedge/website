@@ -11,29 +11,55 @@ $blogDir = __DIR__ . '/../blog';
 $statsFile = $blogDir . '/stats.json';
 
 // Initialize stats file if needed
+// Initialize stats file if needed
 if (!file_exists($statsFile)) {
     file_put_contents($statsFile, json_encode([]));
 }
 
-function getStats() {
+// Helper for atomic updates
+function updateStat($id, $field) {
     global $statsFile;
-    if (file_exists($statsFile)) {
-        return json_decode(file_get_contents($statsFile), true) ?: [];
-    }
-    return [];
-}
-
-function saveStats($stats) {
-    global $statsFile;
-    // Simple locking mechanism
-    $fp = fopen($statsFile, 'c+');
-    if (flock($fp, LOCK_EX)) {
-        ftruncate($fp, 0);
+    $fp = fopen($statsFile, 'c+'); // Open for reading and writing
+    
+    if (flock($fp, LOCK_EX)) { // Acquire exclusive lock
+        $content = '';
+        while (!feof($fp)) {
+            $content .= fread($fp, 8192);
+        }
+        $stats = json_decode($content, true) ?: [];
+        
+        if (!isset($stats[$id])) {
+            $stats[$id] = ['views' => 0, 'kudos' => 0];
+        }
+        
+        $stats[$id][$field]++;
+        
+        ftruncate($fp, 0); // Clear file
+        rewind($fp);
         fwrite($fp, json_encode($stats, JSON_PRETTY_PRINT));
         fflush($fp);
+        flock($fp, LOCK_UN); // Release lock
+        fclose($fp);
+        
+        return $stats[$id];
+    } else {
+        fclose($fp);
+        return false; // Failed to lock
+    }
+}
+
+// Helper for safe reading
+function getStatsSafe() {
+    global $statsFile;
+    $fp = fopen($statsFile, 'r');
+    if (flock($fp, LOCK_SH)) { // Shared lock
+        $content = stream_get_contents($fp);
         flock($fp, LOCK_UN);
+        fclose($fp);
+        return json_decode($content, true) ?: [];
     }
     fclose($fp);
+    return [];
 }
 
 if ($action === 'list') {
@@ -43,14 +69,6 @@ if ($action === 'list') {
     foreach ($files as $file) {
         $content = file_get_contents($file);
         $filename = basename($file);
-        
-        // Parse metadata block
-        // Format:
-        // <!--
-        // ::metadata::
-        // key: value
-        // ::/metadata::
-        // -->
         
         if (preg_match('/<!--\s*::metadata::(.*?)::\/metadata::\s*-->/s', $content, $matches)) {
             $metaBlock = $matches[1];
@@ -64,14 +82,12 @@ if ($action === 'list') {
                 }
             }
             
-            // Only add if we have at least an ID and Title
             if (isset($meta['id']) && isset($meta['title'])) {
                 $posts[] = $meta;
             }
         }
     }
     
-    // Sort by date descending
     usort($posts, function($a, $b) {
         return strtotime($b['date'] ?? 0) - strtotime($a['date'] ?? 0);
     });
@@ -82,53 +98,38 @@ if ($action === 'list') {
 
 if ($action === 'stats') {
     $id = $_GET['id'] ?? null;
-    if (!$id) {
-        echo json_encode(['error' => 'Missing ID']);
-        exit;
-    }
+    if (!$id) { echo json_encode(['error' => 'Missing ID']); exit; }
     
-    $stats = getStats();
-    $postStats = $stats[$id] ?? ['views' => 0, 'kudos' => 0];
-    
-    echo json_encode($postStats);
+    $stats = getStatsSafe();
+    echo json_encode($stats[$id] ?? ['views' => 0, 'kudos' => 0]);
     exit;
 }
 
 if ($action === 'view') {
     $id = $_GET['id'] ?? null;
-    if (!$id) {
-        echo json_encode(['error' => 'Missing ID']);
-        exit;
+    if (!$id) { echo json_encode(['error' => 'Missing ID']); exit; }
+    
+    $result = updateStat($id, 'views');
+    if ($result) {
+        echo json_encode($result);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Lock failed']);
     }
-    
-    $stats = getStats();
-    if (!isset($stats[$id])) {
-        $stats[$id] = ['views' => 0, 'kudos' => 0];
-    }
-    
-    $stats[$id]['views']++;
-    saveStats($stats);
-    
-    echo json_encode($stats[$id]);
     exit;
 }
 
 if ($action === 'kudo') {
     $id = $_GET['id'] ?? null;
-    if (!$id) {
-        echo json_encode(['error' => 'Missing ID']);
-        exit;
+    if (!$id) { echo json_encode(['error' => 'Missing ID']); exit; }
+    
+    $result = updateStat($id, 'kudos');
+    if ($result) {
+        echo json_encode($result);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Lock failed']);
     }
-    
-    $stats = getStats();
-    if (!isset($stats[$id])) {
-        $stats[$id] = ['views' => 0, 'kudos' => 0];
-    }
-    
-    $stats[$id]['kudos']++;
-    saveStats($stats);
-    
-    echo json_encode($stats[$id]);
     exit;
 }
 
