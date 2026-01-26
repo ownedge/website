@@ -838,6 +838,9 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 const isGlitching = ref(false);
 
 const currentFilter = computed(() => {
+    // If animating power-on, let CSS Keyframes control the filter completely
+    if (showPowerOnAnim.value) return null;
+
     const b = brightness.value * 1.1;
     const c = contrast.value;
     const base = `brightness(${b}) contrast(${c})`;
