@@ -161,7 +161,12 @@ const initMap = () => {
 const startMapAnimation = () => {
     if (!mapCanvas.value) return;
     const canvas = mapCanvas.value;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for no alpha if opaque bg possible (but we overlap)
+    
+    // Performance Optimization: Offscreen canvas for static map dots
+    let bgCanvas = document.createElement('canvas');
+    let bgCtx = bgCanvas.getContext('2d');
+    let lastW = 0, lastH = 0;
     
     // Get accent color
     const computedStyle = getComputedStyle(document.body);
@@ -172,52 +177,84 @@ const startMapAnimation = () => {
         
         const rect = canvas.parentElement.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
-        const physicalWidth = rect.width * dpr;
-        const physicalHeight = rect.height * dpr;
+        const physicalWidth = Math.floor(rect.width * dpr);
+        const physicalHeight = Math.floor(rect.height * dpr);
 
         // Resize check handling DPR
-        if (canvas.width !== physicalWidth || canvas.height !== physicalHeight) {
+        const sizeChanged = canvas.width !== physicalWidth || canvas.height !== physicalHeight;
+        if (sizeChanged) {
             canvas.width = physicalWidth;
             canvas.height = physicalHeight;
         }
+
+        // --- 1. Draw/Update Static Background Cache (Only on Resize) ---
+        if (sizeChanged || lastW !== physicalWidth || lastH !== physicalHeight) {
+            bgCanvas.width = physicalWidth;
+            bgCanvas.height = physicalHeight;
+            lastW = physicalWidth;
+            lastH = physicalHeight;
+            
+            // Clear Background
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgCtx.fillStyle = accentColor;
+            
+            // Calculate Map Geometry
+            const targetRatio = 2.0; 
+            const canvasRatio = bgCanvas.width / bgCanvas.height;
+            let mapW, mapH;
+            
+            if (canvasRatio > targetRatio) {
+                mapH = bgCanvas.height;
+                mapW = mapH * targetRatio * 0.7;
+            } else {
+                mapW = bgCanvas.width;
+                mapH = mapW / targetRatio;
+            }
+            
+            // We need to store these for the dynamic layer too, but they depend on width.
+            // For now, re-calc is cheap in dynamic loop, but the drawing is the bottleneck.
+            const offsetX = (bgCanvas.width - mapW) / 2;
+            const offsetY = (bgCanvas.height - mapH) / 2;
+            
+            // Batch Draw Static Dots
+            bgCtx.fillStyle = accentColor;
+            bgCtx.globalAlpha = 0.25;
+            
+            mapPoints.forEach(p => {
+                const x = (p.x * mapW) + offsetX;
+                const y = (p.y * mapH) + offsetY;
+                
+                bgCtx.beginPath();
+                const size = Math.max(0.5 * dpr, mapW / 1400);
+                bgCtx.arc(x, y, size, 0, Math.PI * 2);
+                bgCtx.fill();
+            });
+        }
         
+        // --- 2. Main Render Loop (Per Frame) ---
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = accentColor;
         
-        // Preserve 2:1 Aspect Ratio
+        // A. Blit the cached background (Fast!)
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(bgCanvas, 0, 0);
+        
+        // B. Re-calc geometry for dynamic users (Fast enough, simple math)
+        // (Could optimize by sharing vars but this is negligible compared to draw calls)
         const targetRatio = 2.0; 
         const canvasRatio = canvas.width / canvas.height;
-        
         let mapW, mapH;
-        
         if (canvasRatio > targetRatio) {
-            // Canvas is wider than map -> constrain by height
             mapH = canvas.height;
             mapW = mapH * targetRatio * 0.7;
         } else {
-            // Canvas is narrower -> constrain by width
             mapW = canvas.width;
             mapH = mapW / targetRatio;
         }
-        
         const offsetX = (canvas.width - mapW) / 2;
         const offsetY = (canvas.height - mapH) / 2;
+
         
-        mapPoints.forEach(p => {
-            const x = (p.x * mapW) + offsetX;
-            const y = (p.y * mapH) + offsetY;
-            
-            // Uniform opacity (no gradient/pulse)
-            ctx.globalAlpha = 0.25;
-            
-            ctx.beginPath();
-            // High res scale
-            const size = Math.max(0.5 * dpr, mapW / 1400);
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        
-        // Draw Connected Users
+        // C. Draw Connected Users
         const usersToPlot = [];
         
         // Me
@@ -229,14 +266,11 @@ const startMapAnimation = () => {
         if (chatStore.users) {
             chatStore.users.forEach(u => {
                 if (u.lat && u.lon) {
-                    // Use real location from server
                     usersToPlot.push({ lat: u.lat, lon: u.lon, isMe: false });
                 } else {
-                    // Fallback: Pseudo-random locations based on nick hash
                     let hash = 0;
                     const nick = u.nickname || 'Guest';
                     for (let i = 0; i < nick.length; i++) hash = nick.charCodeAt(i) + ((hash << 5) - hash);
-                    // Lat: -60 to 75. Lon: -180 to 180.
                     const lat = (Math.abs(hash) % 135) - 60;
                     const lon = (Math.abs(hash * 31) % 360) - 180;
                     usersToPlot.push({ lat, lon, isMe: false });
@@ -245,14 +279,10 @@ const startMapAnimation = () => {
         }
 
         usersToPlot.forEach(u => {
-             // Mercator Projection: Matches standard web maps better
-             // Clamp lat to -85 to 85 to avoid infinity
              const safeLat = Math.max(-85, Math.min(85, u.lat));
              const latRad = safeLat * Math.PI / 180;
              const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
-             // Map mercN (-PI to PI) to 0..1
              const uY = (0.5 - (mercN / (2 * Math.PI))) * mapH + offsetY;
-             
              const uX = ((u.lon + 180) / 360) * mapW + offsetX;
              
              // Draw Dot
@@ -273,7 +303,6 @@ const startMapAnimation = () => {
              // Draw PING Ring
              ctx.strokeStyle = accentColor;
              ctx.lineWidth = 1 * dpr;
-             // Varies slightly per user to desync
              const offset = u.lon * 10; 
              const ringPulse = ((time + offset) % 3000) / 3000; 
              const maxRing = dotSize * 7;
