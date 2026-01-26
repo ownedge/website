@@ -190,6 +190,16 @@ const startSpectrumAnalyzer = () => {
         }
 
 
+        if (props.mode === 'off') {
+            const canvas = vfdCanvas.value;
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear screen
+            }
+            animationFrameId = requestAnimationFrame(draw); 
+            return;
+        }
+
         // Normal Operation: Spectrum Analyzer
         if (props.mode !== 'spectrum') return;
         

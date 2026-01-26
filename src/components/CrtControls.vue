@@ -15,6 +15,8 @@ const emit = defineEmits([
   'update:volume', 
   'update:brightness', 
   'update:contrast',
+  'update:isTurbo',
+  'update:powerLed',
   'knob-start', // { type, value }
   'knob-change', // { type, value }
   'knob-end'
@@ -124,8 +126,14 @@ const calculateSpill = (val, min, max) => {
                 <div class="led hdd-led" :class="{ active: isHddActive }"></div>
                 <span class="led-label">DISK</span>
             </div>
-            <div class="led-group" style="--led-color: #ffff00;">
-                <div class="led turbo-led" :class="{ active: isTurbo }"></div>
+            <div class="led-group turbo-group" style="--led-color: #ffff00;">
+                <div 
+                    class="turbo-button" 
+                    :class="{ pressed: isTurbo }"
+                    @mousedown.stop="emit('update:isTurbo', !isTurbo)"
+                >
+                    <div class="led turbo-led" :class="{ active: isTurbo }"></div>
+                </div>
                 <span class="led-label">TURBO</span>
             </div>
         </div>
@@ -192,8 +200,14 @@ const calculateSpill = (val, min, max) => {
                   >CONTRST</span>
             </div>
 
-            <div class="led-group" style="--led-color: #33ff33;">
-                <div class="led power-led" :class="{ active: powerLed }"></div>
+            <div class="led-group turbo-group" style="--led-color: #33ff33;">
+                <div 
+                    class="turbo-button" 
+                    :class="{ pressed: powerLed }"
+                    @mousedown.stop="emit('update:powerLed', !powerLed)"
+                >
+                    <div class="led power-led" :class="{ active: powerLed }"></div>
+                </div>
                 <span class="led-label">POWER</span>
             </div>
         </div>
@@ -210,6 +224,7 @@ const calculateSpill = (val, min, max) => {
     gap: 1.5rem;
     pointer-events: none;
     z-index: 10000;
+    align-items: flex-end; /* Align baselines of labels + buttons */
 }
 
 .power-panel {
@@ -406,4 +421,47 @@ const calculateSpill = (val, min, max) => {
         filter: brightness(0.9);
     }
 }
+
+/* Turbo Button Styles */
+.turbo-group {
+    pointer-events: auto; /* Enable clicks */
+    justify-content: flex-end; /* Align bottom */
+    gap: 0.25rem !important; /* Reduced gap to align the internal LED with neighboring LEDs */
+    padding-bottom: 0px; /* Fine tune label baseline */
+}
+
+.turbo-button {
+    pointer-events: auto; /* Guarantee Interaction */
+    width: 42px; /* Slightly wider than tall */
+    height: 30px;
+    padding-top: 8px;
+    background: #232323;
+    border: 1px solid #000;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 
+        inset 1px 1px 4px rgba(255,255,255,0.1),
+        inset -1px -1px 1px rgba(0,0,0,0.5),
+        0 2px 4px rgba(0,0,0,0.6);
+    transition: all 0.1s ease;
+    position: relative;
+    top: 0;
+}
+
+/* Pressed State (Visual Depth) */
+.turbo-button:active,
+.turbo-button.pressed {
+    background: #1c1c1c;
+    box-shadow: 
+        inset 1px 1px 7px rgba(0,0,0,0.9),
+        inset -1px -1px 1px rgba(255,255,255,0.19),
+        0 0 1px rgba(0,0,0,0.5); /* Flattened shadow */
+    top: 1px; /* Physically move down */
+    border-color: #000;
+}
+
+
 </style>

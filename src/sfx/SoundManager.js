@@ -98,6 +98,16 @@ class SoundManager {
         }
     }
 
+    stop() {
+        if (this.ctx) {
+            this.ctx.suspend();
+            if (this.trackerPlayer) {
+                this.trackerPlayer.stop();
+            }
+            this.stopAtmosphere();
+        }
+    }
+
     // --- Sound Effects ---
     
     playBootSequence() {

@@ -104,8 +104,8 @@ const handleResize = () => {
 
 
 const isCapsLock = ref(false);
-const isTurbo = ref(true); // Always fast!
 const isHddActive = ref(false);
+const isPowerOn = ref(true);
 
 const updateLockStates = (e) => {
   if (e.getModifierState) {
@@ -254,6 +254,37 @@ const handleGlobalClick = (e) => {
         }
     }, 10);
 }
+
+// Power Logic
+// Power Logic
+const showPowerOffAnim = ref(false);
+
+watch(isPowerOn, (newVal) => {
+    if (!newVal) {
+        // Power Off Trigger
+        showPowerOffAnim.value = true;
+        
+        setTimeout(() => {
+            // Complete Power Down (Reset State)
+            isBooted.value = false;
+            vfdMode.value = 'off';
+            vfdBootState.value = 'loading'; 
+            SoundManager.stop();
+            showPowerOffAnim.value = false;
+        }, 400);
+    } else {
+        // Power On Trigger
+        SoundManager.resume();
+        
+        // We do NOTHING here except set state variables if needed.
+        // The v-if="isPowerOn" in template will re-mount the application.
+        // The BootLoader component will mount, see isBooted=false, and start the sequence automatically.
+        
+        // Reset VFD to loading state for the boot sequence
+        vfdBootState.value = 'loading';
+        vfdMode.value = 'spectrum'; // (Or off until bootloader grabs it)
+    }
+});
 
 const handleBootStart = async () => {
   // 1. Reveal Content IMMEDIATELY (Safari Fix)
@@ -716,6 +747,7 @@ const savedSettings = loadSettings();
 const volume = ref(savedSettings?.volume ?? SYSTEM_CONFIG.AUDIO.MASTER_VOL);
 const brightness = ref(savedSettings?.brightness ?? SYSTEM_CONFIG.VISUALS.BRIGHTNESS_DEFAULT);
 const contrast = ref(savedSettings?.contrast ?? SYSTEM_CONFIG.VISUALS.CONTRAST_DEFAULT);
+const isTurbo = ref(savedSettings?.isTurbo ?? SYSTEM_CONFIG.VISUALS.TURBO_DEFAULT);
 
 // Sync initial volume
 SoundManager.setMasterVolume(volume.value);
@@ -724,7 +756,8 @@ const saveSettings = () => {
     const settings = {
         volume: volume.value,
         brightness: brightness.value,
-        contrast: contrast.value
+        contrast: contrast.value,
+        isTurbo: isTurbo.value
     };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 };
@@ -734,7 +767,7 @@ const saveNickname = (nick) => {
 };
 
 // Auto-save on change
-watch([volume, brightness, contrast], saveSettings);
+watch([volume, brightness, contrast, isTurbo], saveSettings);
 watch(() => chatStore.nickname, (newNick) => {
     saveNickname(newNick);
 });
@@ -827,10 +860,10 @@ const handleGlitchState = (isActive) => {
         v-model:volume="volume"
         v-model:brightness="brightness"
         v-model:contrast="contrast"
+        v-model:is-turbo="isTurbo"
+        v-model:power-led="isPowerOn"
         :is-caps-lock="isCapsLock"
         :is-hdd-active="isHddActive"
-        :is-turbo="isTurbo"
-        :power-led="true"
         @knob-start="handleKnobStart"
         @knob-change="handleKnobChange"
         @knob-end="handleKnobEnd"
@@ -861,7 +894,12 @@ const handleGlitchState = (isActive) => {
 
     <div class="crt-screen">
       <!-- Apply 'crt-content' class for filter -->
-      <div class="app-container" :style="{ filter: currentFilter }">
+      <div 
+        class="app-container" 
+        :class="{ 'power-off-anim': showPowerOffAnim }" 
+        :style="{ filter: currentFilter }"
+        v-if="isPowerOn || showPowerOffAnim"
+      >
         <!-- Fixed Background/Overlays -->
         <BootLoader 
           v-if="!isBot"
@@ -1127,6 +1165,29 @@ const handleGlitchState = (isActive) => {
     transform: translateX(-50%);
     background-color: #050908;
     border: 1px solid #1a1a1a; /* Darker border */
+}
+
+/* CRT Power Off Animation */
+.power-off-anim {
+    animation: crt-power-off 0.4s ease-out forwards;
+}
+
+@keyframes crt-power-off {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) contrast(1);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1, 0.02); /* Squash vertically to a line */
+        filter: brightness(3) contrast(2); /* Flash bright */
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0, 0); /* Shrink to center point */
+        filter: brightness(0);
+    }
 }
 
 /* VFD Label Box */

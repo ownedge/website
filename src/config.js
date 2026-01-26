@@ -20,6 +20,7 @@ export const SYSTEM_CONFIG = {
     VISUALS: {
         BRIGHTNESS_DEFAULT: 1,  // Multiplier (0.5 - 1.5)
         CONTRAST_DEFAULT: 1,    // Multiplier (0.5 - 1.5)
-        HUE_DEFAULT: 0.5        // 0.0 - 1.0 (0.5 = Teal center)
+        HUE_DEFAULT: 0.5,       // 0.0 - 1.0 (0.5 = Teal center)
+        TURBO_DEFAULT: false    // Default OFF
     }
 };
