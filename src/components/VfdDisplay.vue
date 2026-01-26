@@ -66,7 +66,7 @@ watch(() => props.bootState, (newState) => {
 const startRenderLoop = () => {
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-    const FPS = 40;
+    const FPS = 60;
     const FRAME_INTERVAL = 1000 / FPS;
     let lastFrameTime = 0;
 
@@ -360,16 +360,18 @@ const startRenderLoop = () => {
         // Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        const dotSize = 0.5;
-        const gap = 0; 
+        // DEEP OPTIMIZATION: Reduced columns (larger bars) to minimize draw calls
+        const dotSize = 1; // Was 0.5
+        const gap = 0;     // Was 0
         const paddingX = 4;
         const paddingY = 2;
         const step = dotSize + gap;
         
         const cols = Math.floor((canvas.width - (paddingX * 2)) / step);
-        // Optimization: Pre-calc these colors once if possible, but assignment is cheap
+        
+        // OPTIMIZATION: Set style once, avoid state changes in loop
         ctx.fillStyle = '#48ffed'; 
-        // Optimization: REMOVED shadowBlur from loop. Rely on CSS filter.
+        ctx.globalAlpha = 0.95; // Fixed high opacity for clarity
 
         // Draw Visualization
         for (let i = 0; i < cols; i++) {
@@ -382,8 +384,6 @@ const startRenderLoop = () => {
             if (barHeight > 0) {
                 const x = paddingX + (i * step);
                 const y = canvas.height - paddingY - barHeight;
-                
-                ctx.globalAlpha = 0.8 + (value / 1200);
                 ctx.fillRect(x, y, dotSize, barHeight);
             }
         }

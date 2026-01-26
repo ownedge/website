@@ -915,7 +915,7 @@ const handleGlitchState = (isActive) => {
 
         <div class="fixed-background" @mousedown="startSelection">
             <GridOverlay v-if="!isTurbo" />
-            <TrackerOverlay v-if="!isTurbo" />
+            <TrackerOverlay :clean-mode="isTurbo" />
         </div>
 
         <!-- Scrollable Content -->
@@ -935,8 +935,8 @@ const handleGlitchState = (isActive) => {
         </div>
         
         <!-- Fixed Foreground Overlays -->
-        <div class="scanlines" v-if="!isTurbo"></div>
-        <div class="vignette" v-if="!isTurbo"></div>
+        <div class="scanlines" :class="{ 'optimized': isTurbo }"></div>
+        <div class="vignette"></div>
 
         <!-- Global Virtual Keyboard (Mobile Only) -->
         <VirtualKeyboard />
@@ -1124,7 +1124,7 @@ const handleGlitchState = (isActive) => {
   left: 0;
   width: 100%;
   height: 100%;
-  /* Create a 'mask' of black with transparent holes */
+  /* Default High-Quality Radial (Turbo OFF) */
   background: radial-gradient(
     circle,
     transparent 2%,
@@ -1134,6 +1134,17 @@ const handleGlitchState = (isActive) => {
   pointer-events: none;
   z-index: 50;
   opacity: 0.75;
+}
+
+.scanlines.optimized {
+  /* Turbo ON: Linear Gradient */
+  background: linear-gradient(
+    to bottom,
+    transparent 10%,
+    v-bind(scanlineColor) 31%
+  );
+  background-size: 100% 1.2px;
+  opacity: 0.55;
 }
 
 /* Vignette / Tube Curvature Simulation */

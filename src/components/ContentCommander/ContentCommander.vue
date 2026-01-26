@@ -87,6 +87,27 @@ const trackFps = () => {
     fpsReqId = requestAnimationFrame(trackFps);
 };
 
+const fpsColor = computed(() => {
+    const val = fps.value;
+    if (val >= 35) return '#666666';
+    
+    if (val >= 20) {
+        // Range 20-35: Orange (#FFA500) to Grey (#666666)
+        const t = (val - 20) / (35 - 20); // 0 at 20, 1 at 35
+        const r = Math.round(255 + (102 - 255) * t);
+        const g = Math.round(165 + (102 - 165) * t);
+        const b = Math.round(0 + (102 - 0) * t);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    
+    // Range 0-20: Red (#FF0000) to Orange (#FFA500)
+    const t = val / 20; // 0 at 0, 1 at 20
+    const r = 255;
+    const g = Math.round(165 * t);
+    const b = 0;
+    return `rgb(${r}, ${g}, ${b})`;
+});
+
 onMounted(() => {
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
@@ -127,7 +148,7 @@ onUnmounted(() => {
         <div class="f-key" :class="{ active: activeKey === 'F3' }"><span>F3</span> <span class="f-label">VIEW</span></div>
         <div class="f-key" :class="{ active: activeKey === 'F4' }"><span>F4</span> <span class="f-label">QUIT</span></div>
         <div class="f-key sys-status">
-            <span style="color: #666; background-color: transparent; margin-right: 15px;">{{ fps }} FPS</span>
+            <span :style="{ color: fpsColor, backgroundColor: 'transparent', marginRight: '15px' }">{{ fps }} FPS</span>
             <div><span>ONLINE</span></div>
         </div>
       </div>

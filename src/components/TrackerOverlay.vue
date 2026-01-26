@@ -5,7 +5,8 @@ import SoundManager from '../sfx/SoundManager';
 
 const props = defineProps({
   screenRect: Object,
-  reflectionOnly: Boolean
+  reflectionOnly: Boolean,
+  cleanMode: Boolean
 });
 const canvasRef = ref(null);
 const hasStarted = ref(false);
@@ -119,9 +120,11 @@ const draw = () => {
         ctx.font = 'bold 16px "Courier New", monospace';
         ctx.fillStyle = MAIN_COLOR;
         
-        // Glow Effect
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = MAIN_COLOR;
+        // Glow Effect (Only if NOT in clean mode)
+        if (!props.cleanMode) {
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = MAIN_COLOR;
+        }
         
         ctx.fillText(str, startX, startY);
         
