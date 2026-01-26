@@ -70,14 +70,33 @@ const handleKeyup = (e) => {
     }
 }
 
+const fps = ref(60);
+let frameCount = 0;
+let lastTime = performance.now();
+let fpsReqId = null;
+
+const trackFps = () => {
+    const now = performance.now();
+    frameCount++;
+    
+    if (now - lastTime >= 1000) {
+        fps.value = frameCount;
+        frameCount = 0;
+        lastTime = now;
+    }
+    fpsReqId = requestAnimationFrame(trackFps);
+};
+
 onMounted(() => {
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
+    trackFps();
 });
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown);
     window.removeEventListener('keyup', handleKeyup);
+    if (fpsReqId) cancelAnimationFrame(fpsReqId);
 });
 
 </script>
@@ -107,7 +126,10 @@ onUnmounted(() => {
         <div class="f-key" :class="{ active: activeKey === 'F2' }"><span>F2</span> <span class="f-label">LINK</span></div>
         <div class="f-key" :class="{ active: activeKey === 'F3' }"><span>F3</span> <span class="f-label">VIEW</span></div>
         <div class="f-key" :class="{ active: activeKey === 'F4' }"><span>F4</span> <span class="f-label">QUIT</span></div>
-        <div class="f-key sys-status"><span>ONLINE</span></div>
+        <div class="f-key sys-status">
+            <span style="color: #666; background-color: transparent; margin-right: 15px;">{{ fps }} FPS</span>
+            <div><span>ONLINE</span></div>
+        </div>
       </div>
     </div>
   </div>
