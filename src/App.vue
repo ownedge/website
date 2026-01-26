@@ -951,6 +951,7 @@ const handleGlitchState = (isActive) => {
     
     <!-- Bezel Reflection Overlay (Tracker Text only) -->
     <TrackerOverlay 
+      v-if="!isTurbo"
       class="bezel-reflection-text" 
       :class="{ 'fade-out': showPowerOffAnim }"
       style="z-index: 100; pointer-events: none;" 
@@ -959,7 +960,7 @@ const handleGlitchState = (isActive) => {
     />
     
     <!-- Bezel Glow Bars (Menu/Footer reflection) -->
-    <BezelReflection v-if="isBooted" :class="{ 'fade-out': showPowerOffAnim }" />
+    <BezelReflection v-if="isBooted && !isTurbo" :class="{ 'fade-out': showPowerOffAnim }" />
 
     <!-- Vintage Sony Sticker (Top Left) -->
     <div class="bezel-sticker">
