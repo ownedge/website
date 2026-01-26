@@ -4,6 +4,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 const canvasRef = ref(null);
 let animationFrameId = null;
 
+const lastState = { w: 0, h: 0, scrollTop: -1 };
+
 const draw = () => {
     const canvas = canvasRef.value;
     if (!canvas) {
@@ -17,49 +19,85 @@ const draw = () => {
     if (canvas.width !== targetW || canvas.height !== targetH) {
         canvas.width = targetW;
         canvas.height = targetH;
+        lastState.w = 0; // Force redraw
     }
     
+    // Check Scroll State
+    const scrollContainer = document.querySelector('.scroll-content');
+    const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+    
+    // Optimization: Only redraw if something changed
+    if (
+        targetW === lastState.w && 
+        targetH === lastState.h && 
+        Math.abs(scrollTop - lastState.scrollTop) < 0.5
+    ) {
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+    }
+    
+    // Update State
+    lastState.w = targetW;
+    lastState.h = targetH;
+    lastState.scrollTop = scrollTop;
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Only draw on desktop
     if (canvas.width > 900) {
-        // Find scroll container directly to avoid reactivity lag
-        const scrollContainer = document.querySelector('.scroll-content');
-        const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
         const windowH = window.innerHeight;
         
         // --- BEZEL GLOW LOGIC ---
-        // Aligned with user-tuned values
+        // Aligned with user-tuned values (windowH - 172)
         const heroHeight = windowH - 172; 
         
         // Detect Safari (rough check for "different opacity" requirement)
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        const opacity = isSafari ? 0.025 : 0.15;
+        const menuOpacity = isSafari ? 0.055 : 0.07;
+        const footerOpacity = isSafari ? 0.025 : 0.025; // Kept lower/standard for footer line if desired
         
         // 1. Menu Bar Glow
-        const menuY = heroHeight - scrollTop + 0; 
+        const menuY = heroHeight - scrollTop; 
         
-        if (menuY > -50 && menuY < windowH + 50) {
-             ctx.filter = "blur(18px)"; // Menu Blur
-             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-             ctx.fillRect(0, menuY, canvas.width, 44);
+        if (menuY > -100 && menuY < windowH + 100) {
+             // Optimized: Gradient instead of Blur
+             const menuH = 44;
+             const blur = 18;
+             const g = ctx.createLinearGradient(0, menuY - blur, 0, menuY + menuH + blur);
+             g.addColorStop(0, `rgba(255, 255, 255, 0)`);
+             g.addColorStop(0.3, `rgba(255, 255, 255, ${menuOpacity})`);
+             g.addColorStop(0.7, `rgba(255, 255, 255, ${menuOpacity})`);
+             g.addColorStop(1, `rgba(255, 255, 255, 0)`);
+             
+             ctx.fillStyle = g;
+             ctx.fillRect(0, menuY - blur, canvas.width, menuH + blur * 2);
+
         }
         
         // 2. Footer Glow
+        // Aligned with user-tuned values (windowH - 232)
         const footerY = heroHeight + windowH - 232 - scrollTop;
         
         if (footerY > -50 && footerY < windowH + 50) {
-             ctx.filter = "blur(6px)"; // Footer Blur (Thinner line needs less blur or it vanishes)
-             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-             ctx.fillRect(0, footerY, canvas.width, 3); 
+             // Optimized: Gradient instead of Blur
+             const footerH = 3;
+             const blur = 10;
+             const g = ctx.createLinearGradient(0, footerY - blur, 0, footerY + footerH + blur);
+             g.addColorStop(0, `rgba(255, 255, 255, 0)`);
+             g.addColorStop(0.4, `rgba(255, 255, 255, ${footerOpacity})`);
+             g.addColorStop(0.6, `rgba(255, 255, 255, ${footerOpacity})`);
+             g.addColorStop(1, `rgba(255, 255, 255, 0)`);
+
+             ctx.fillStyle = g;
+             ctx.fillRect(0, footerY - blur, canvas.width, footerH + blur * 2); 
         }
         
-        // Reset filter so the bezel mask ITSELF is sharp
+        // No filter needed
         ctx.filter = "none";
         
         // --- BEZEL MASK (Constrain to 11px Border) ---
-        // Keeps pixels only where the plastic bezel would be.
+        // ... (rest is unchanged logic for bezel masking)
         ctx.globalCompositeOperation = 'destination-in';
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 11;
@@ -70,10 +108,6 @@ const draw = () => {
         const padTop = 43;
         const padBot = 83;
         const borderW = 11;
-        // The outer CSS radius is 40px. 
-        // We stroke strictly along the center (offset 5.5px).
-        // Mathematically, radius should be 34.5px.
-        // However, visually adjusting to 38px to match user expectation of "40px radius".
         const strokeRadius = 38; 
         
         const offset = borderW / 2;
@@ -86,7 +120,6 @@ const draw = () => {
         if (ctx.roundRect) {
             ctx.roundRect(mx, my, mw, mh, strokeRadius);
         } else {
-            // Fallback for older browsers
             ctx.moveTo(mx + strokeRadius, my);
             ctx.arcTo(mx + mw, my, mx + mw, my + mh, strokeRadius);
             ctx.arcTo(mx + mw, my + mh, mx, my + mh, strokeRadius);
@@ -97,28 +130,13 @@ const draw = () => {
         ctx.stroke();
         
         // --- BOTTOM MASK (Hide Reflection on Bottom Border) ---
-        // Requested: Cover the 11px high bottom border to HIDE reflection logic.
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = '#000'; // Color irrelevant
+        ctx.fillStyle = '#000'; 
         
-        // Bottom border Y position:
-        // mh = height of the stroked rect (approx inner height)
-        // my = top of stroked rect
-        // The Border is stroke centered at my+mh.
-        // It extends from my + mh - 5.5 to my + mh + 5.5.
-        // Or simpler: The border is at `canvas.height - padBot - borderW` to `canvas.height - padBot`.
-        // padBot = 80.
-        // borderW = 11.
-        // So bottom bezel is from Y = `canvas.height - 80 - 11` to `canvas.height - 80`.
-        
-        // We want to mask this exact strip.
         const maskY = canvas.height - padBot - borderW;
-        const maskH = borderW + 2; // +2 just to be safe
-        
+        const maskH = borderW + 2; 
         ctx.fillRect(0, maskY, canvas.width, maskH);
         
-        
-        // Reset composite for next frame clearing
         ctx.globalCompositeOperation = 'source-over';
     }
     

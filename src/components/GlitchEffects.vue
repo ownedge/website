@@ -13,23 +13,47 @@ const props = defineProps({
 // so the logic actually does something visible.
 const turbulenceFreq = ref(0.002);
 
+const emit = defineEmits(['glitch-playing']);
+
+const isTurbulenceActive = ref(false);
+const isWaveActive = ref(false);
+
+const updateGlitchState = () => {
+    emit('glitch-playing', isTurbulenceActive.value || isWaveActive.value);
+};
+
 const triggerGlitch = () => {
     if (!props.active) return;
 
     // Glitch sequence: Spike -> Recover -> Minor Spike -> Recover
     const spike = () => {
+       isTurbulenceActive.value = true;
+       // We keep turbulence freq non-reactive to App unless needed?
+       // Actually updates are fine.
+       updateGlitchState();
+
        turbulenceFreq.value = 0.24 * Math.random();
        setTimeout(() => {
            turbulenceFreq.value = 0.002; 
+           // End of immediate spike
+           // logic complexity: we don't know if double spike is coming here easily.
+           // Use the simplified timeout wrapper for state.
        }, 50 + Math.random() * 100);
     };
 
     spike();
     
     // Occasionally double glitch
-    if (Math.random() > 0.5) {
+    const hasDouble = Math.random() > 0.5;
+    if (hasDouble) {
         setTimeout(spike, 150);
     }
+    
+    // Cleanup State
+    setTimeout(() => {
+        isTurbulenceActive.value = false;
+        updateGlitchState();
+    }, hasDouble ? 350 : 200);
     
     // Schedule next glitch
     setTimeout(triggerGlitch, Math.random() * 8000 + 20000); 
@@ -41,6 +65,9 @@ const glitchWaveStrength = ref(0);
 
 const triggerWaveGlitch = () => {
     if (!props.active) return;
+    
+    isWaveActive.value = true;
+    updateGlitchState();
 
     // Smooth ease-in-out wave distortion
     const intensity = Math.random() > 0.8 ? 50 : 20; 
@@ -60,6 +87,8 @@ const triggerWaveGlitch = () => {
             requestAnimationFrame(animate);
         } else {
             glitchWaveStrength.value = 0;
+            isWaveActive.value = false;
+            updateGlitchState();
             // Schedule next glitch
             setTimeout(triggerWaveGlitch, Math.random() * 6000 + 30000); // Every 30-36s
         }

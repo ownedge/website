@@ -793,10 +793,32 @@ const scanlineColor = `hsl(188, 40%, 9%)`;
 const vfdBgColor = `hsl(188, 42%, 7%)`;
 
 
+const isGlitching = ref(false);
+
+const currentFilter = computed(() => {
+    const b = brightness.value * 1.1;
+    const c = contrast.value;
+    const base = `brightness(${b}) contrast(${c})`;
+    
+    // Optimization: Only apply heavy SVG filters when actively glitching
+    if (isGlitching.value) {
+        return `${base} url(#spherical-warp) url(#wave-glitch)`;
+    }
+    return base;
+});
+
+const handleGlitchState = (isActive) => {
+    isGlitching.value = isActive;
+};
 </script>
 
 <template>
   <div class="crt-wrapper">
+    <!-- ... same ... -->
+    <!-- ... same ... -->
+    <!-- ... same ... -->
+    <!-- ... same ... -->
+    <!-- ... same ... -->
     
     <!-- Fixed Status LEDs -->
     <!-- Extracted Controls (LEDs + Knobs) -->
@@ -839,7 +861,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
 
     <div class="crt-screen">
       <!-- Apply 'crt-content' class for filter -->
-      <div class="app-container">
+      <div class="app-container" :style="{ filter: currentFilter }">
         <!-- Fixed Background/Overlays -->
         <BootLoader 
           v-if="!isBot"
@@ -906,7 +928,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
         <div class="sticker-wear"></div>
     </div>
   </div>
-    <GlitchEffects :active="!isBot" />
+    <GlitchEffects :active="!isBot" @glitch-playing="handleGlitchState" />
 </template>
 
 <style scoped>
@@ -1007,8 +1029,7 @@ const vfdBgColor = `hsl(188, 42%, 7%)`;
   position: relative;
   background: radial-gradient(circle at center, #2f2f2f00 1%, #0e0e0e 90%);
   overflow: hidden; /* Container is fixed window */
-  /* Reorder filters and use direct CSS where possible */
-  filter: brightness(v-bind(brightness*1.1)) contrast(v-bind(contrast)) url(#spherical-warp) url(#wave-glitch);
+  transform: translateZ(0); /* Force GPU */
 }
 
 /* Fixed Background Layer */
