@@ -503,7 +503,6 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     color: var(--color-accent);
     border-bottom: 1px solid rgba(64, 224, 208, 0.3);
     display: inline-block;
-    padding-top: 10px;
     padding-left: 10px;
     padding-bottom: 5px;
     margin-bottom: 20px;
@@ -739,5 +738,9 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     }
 
     @keyframes blink { 50% { opacity: 0; } }
+
+    .section-content h3 {
+        padding-top: 12px;
+    }
 }
 </style>

@@ -129,6 +129,7 @@ onUnmounted(() => {
 .tui-tab-bar {
     display: flex;
     padding: 0;
+    padding-left: 25px;
     gap: 0;
     align-items: flex-end; /* Ground the tabs so they expand upwards smoothly */
     height: 44px; /* Total height of largest tab */

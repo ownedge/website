@@ -31,7 +31,7 @@ const draw = () => {
         
         // --- BEZEL GLOW LOGIC ---
         // Aligned with user-tuned values
-        const heroHeight = windowH - 175; 
+        const heroHeight = windowH - 190; 
         
         // Detect Safari (rough check for "different opacity" requirement)
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
