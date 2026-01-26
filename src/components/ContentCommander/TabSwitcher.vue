@@ -158,8 +158,10 @@ onUnmounted(() => {
     z-index: 2;
 }
 
-.tui-tab:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.1);
+@media (min-width: 901px) {
+    .tui-tab:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.1);
+    }
 }
 
 .tui-tab.active {

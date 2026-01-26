@@ -257,7 +257,7 @@ const startMapAnimation = () => {
              
              // Draw Dot
              ctx.fillStyle = '#fff'; // Bright white center
-             ctx.globalAlpha = 1.0;
+             ctx.globalAlpha = 0.9;
              ctx.beginPath();
              const dotSize = Math.max(1.5 * dpr, mapW / 200); // Prominent dot
              ctx.arc(uX, uY, dotSize * 0.6, 0, Math.PI * 2);
@@ -265,7 +265,7 @@ const startMapAnimation = () => {
              
              // Glow
              ctx.fillStyle = accentColor;
-             ctx.globalAlpha = 0.5;
+             ctx.globalAlpha = 0.45;
              ctx.beginPath();
              ctx.arc(uX, uY, dotSize, 0, Math.PI * 2);
              ctx.fill();
@@ -276,7 +276,7 @@ const startMapAnimation = () => {
              // Varies slightly per user to desync
              const offset = u.lon * 10; 
              const ringPulse = ((time + offset) % 3000) / 3000; 
-             const maxRing = dotSize * 8;
+             const maxRing = dotSize * 7;
              
              ctx.globalAlpha = Math.max(0, 1 - ringPulse); 
              ctx.beginPath();
@@ -586,7 +586,8 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     scrollbar-width: thin;
     scrollbar-color: #333 transparent;
     position: relative;
-    z-index: 1;
+    z-index: 2; /* Boost z-index just in case */
+    text-shadow: 0 1px 3px #000, 0 0 5px #000; /* Ensure legibility over bright beacons */
 }
 
 .msg { margin-bottom: 6px; line-height: 1.5; display: flex; gap: 8px; }
