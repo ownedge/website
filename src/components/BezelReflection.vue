@@ -31,7 +31,7 @@ const draw = () => {
         
         // --- BEZEL GLOW LOGIC ---
         // Aligned with user-tuned values
-        const heroHeight = windowH - 190; 
+        const heroHeight = windowH - 172; 
         
         // Detect Safari (rough check for "different opacity" requirement)
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -47,7 +47,7 @@ const draw = () => {
         }
         
         // 2. Footer Glow
-        const footerY = heroHeight + windowH - 229 - scrollTop;
+        const footerY = heroHeight + windowH - 232 - scrollTop;
         
         if (footerY > -50 && footerY < windowH + 50) {
              ctx.filter = "blur(6px)"; // Footer Blur (Thinner line needs less blur or it vanishes)

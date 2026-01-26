@@ -198,6 +198,7 @@ onUnmounted(() => {
     .tui-tab-bar {
         overflow-x: auto;
         padding-bottom: 5px; /* Space for scrollbar if any */
+        padding-left: 0px;
         height: 50px;
         scrollbar-width: none;
         scroll-behavior: smooth; /* Enable smooth scrolling */

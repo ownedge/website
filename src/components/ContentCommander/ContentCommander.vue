@@ -119,7 +119,7 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px 0 0 0;
+  padding: 38px 0 0 0;
   background-color: transparent;
   font-family: 'Microgramma', monospace; 
   color: #fff;
