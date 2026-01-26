@@ -116,16 +116,21 @@ const calculateSpill = (val, min, max) => {
 
 <template>
     <div class="crt-controls" :class="{ 'power-off-mode': !powerLed }">
-         <!-- Fixed Status LEDs -->
+         <!-- Fixed Status LEDs (Left Side) -->
         <div class="led-panel">
-            <div class="led-group" style="--led-color: #33ff33;">
-                <div class="led active-caps" :class="{ active: isCapsLock }"></div>
-                <span class="led-label">CAPS</span>
+            <!-- 1. POWER Button -->
+            <div class="led-group turbo-group" style="--led-color: #33ff33;">
+                <div 
+                    class="turbo-button" 
+                    :class="{ pressed: powerLed }"
+                    @mousedown.stop="emit('update:powerLed', !powerLed)"
+                >
+                    <div class="led power-led" :class="{ active: powerLed }"></div>
+                </div>
+                <span class="led-label">POWER</span>
             </div>
-            <div class="led-group" style="--led-color: #ffaa00;">
-                <div class="led hdd-led" :class="{ active: isHddActive }"></div>
-                <span class="led-label">DISK</span>
-            </div>
+
+            <!-- 2. TURBO Button -->
             <div class="led-group turbo-group" style="--led-color: #ffff00;">
                 <div 
                     class="turbo-button" 
@@ -136,9 +141,21 @@ const calculateSpill = (val, min, max) => {
                 </div>
                 <span class="led-label">TURBO</span>
             </div>
+
+            <!-- 3. DISK LED -->
+            <div class="led-group" style="--led-color: #ffaa00;">
+                <div class="led hdd-led" :class="{ active: isHddActive }"></div>
+                <span class="led-label">DISK</span>
+            </div>
+
+            <!-- 4. CAPS LED -->
+            <div class="led-group" style="--led-color: #33ff33;">
+                <div class="led active-caps" :class="{ active: isCapsLock }"></div>
+                <span class="led-label">CAPS</span>
+            </div>
         </div>
 
-        <!-- Power Panel (Knobs + Power LED) -->
+        <!-- Power Panel (Knobs Only) -->
         <div class="power-panel">
             <!-- Volume Knob -->
             <div class="volume-control" @mousedown="(e) => handleKnobDown(e, 'vol')">
@@ -198,17 +215,6 @@ const calculateSpill = (val, min, max) => {
                           '--led-color': '#ff0000'
                       }"
                   >CONTRST</span>
-            </div>
-
-            <div class="led-group turbo-group" style="--led-color: #33ff33;">
-                <div 
-                    class="turbo-button" 
-                    :class="{ pressed: powerLed }"
-                    @mousedown.stop="emit('update:powerLed', !powerLed)"
-                >
-                    <div class="led power-led" :class="{ active: powerLed }"></div>
-                </div>
-                <span class="led-label">POWER</span>
             </div>
         </div>
     </div>
@@ -435,7 +441,7 @@ const calculateSpill = (val, min, max) => {
     width: 42px; /* Slightly wider than tall */
     height: 30px;
     padding-top: 8px;
-    background: #232323;
+    background: #1c1c1c;
     border: 1px solid #000;
     border-radius: 5px;
     display: flex;
