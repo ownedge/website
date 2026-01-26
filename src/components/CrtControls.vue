@@ -130,15 +130,9 @@ const calculateSpill = (val, min, max) => {
                 <span class="led-label">POWER</span>
             </div>
 
-            <!-- 2. TURBO Button -->
-            <div class="led-group turbo-group" style="--led-color: #ffff00;">
-                <div 
-                    class="turbo-button" 
-                    :class="{ pressed: isTurbo }"
-                    @mousedown.stop="emit('update:isTurbo', !isTurbo)"
-                >
-                    <div class="led turbo-led" :class="{ active: isTurbo }"></div>
-                </div>
+            <!-- 2. TURBO LED (Static Indicator) -->
+            <div class="led-group" style="--led-color: #ffff00;">
+                <div class="led turbo-led" :class="{ active: isTurbo }"></div>
                 <span class="led-label">TURBO</span>
             </div>
 
