@@ -917,7 +917,7 @@ const handleGlitchState = (isActive) => {
 
         <div class="fixed-background" @mousedown="startSelection">
             <GridOverlay v-if="!isTurbo" />
-            <TrackerOverlay />
+            <TrackerOverlay v-if="!isTurbo" />
         </div>
 
         <!-- Scrollable Content -->
