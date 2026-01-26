@@ -268,7 +268,7 @@ watch(isPowerOn, (newVal) => {
             // Complete Power Down (Reset State)
             isBooted.value = false;
             vfdMode.value = 'off';
-            vfdBootState.value = 'loading'; 
+            vfdBootState.value = 'complete'; // Ensure VFD can show Standby
             SoundManager.stop();
             showPowerOffAnim.value = false;
         }, 400);

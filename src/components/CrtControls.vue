@@ -115,7 +115,7 @@ const calculateSpill = (val, min, max) => {
 </script>
 
 <template>
-    <div class="crt-controls">
+    <div class="crt-controls" :class="{ 'power-off-mode': !powerLed }">
          <!-- Fixed Status LEDs -->
         <div class="led-panel">
             <div class="led-group" style="--led-color: #33ff33;">
@@ -461,6 +461,39 @@ const calculateSpill = (val, min, max) => {
         0 0 1px rgba(0,0,0,0.5); /* Flattened shadow */
     top: 1px; /* Physically move down */
     border-color: #000;
+}
+
+
+/* POWER OFF MODE OVERRIDES */
+/* 1. Turn off all LEDs except Power (handled by prop already?) 
+   Wait, if powerLed IS false, then even the Power LED is off in logic, 
+   but user wants ALL leds off. 
+   The component receives props like `isTurbo`. Even if isTurbo is TRUE in state, 
+   visually it should look OFF if power is off.
+*/
+.power-off-mode .led {
+    background-color: #1a1a1a !important; /* Force dark base */
+    background-image: radial-gradient(circle at center, rgba(255,255,255,0.05) 0.5px, transparent 1px) !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8) !important;
+    border-color: #161616 !important;
+    filter: none !important;
+    animation: none !important;
+}
+
+/* 2. Turn off knob markers */
+.power-off-mode .knob-marker {
+    background: #330000; /* Dark red, almost black */
+    box-shadow: none;
+    animation: none;
+}
+
+/* 3. Turn off light spill on labels */
+.power-off-mode .led-label {
+    --spill-opacity: 0% !important;
+    color: #333 !important; /* Fallback dark text */
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.5) !important;
+    background-image: none !important;
+    -webkit-text-fill-color: #333 !important;
 }
 
 

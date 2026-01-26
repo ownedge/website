@@ -194,7 +194,24 @@ const startSpectrumAnalyzer = () => {
             const canvas = vfdCanvas.value;
             if (canvas) {
                 const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear screen
+                ctx.clearRect(0, 0, canvas.width, canvas.height); 
+                
+                // Draw Glowing "STANDBY"
+                const now = Date.now();
+                const pulse = (Math.sin(now * 0.003) + 1) / 2; // 0 to 1 over time
+                const alpha = 0.3 + (pulse * 0.1); // 0.3 to 0.7 opacity
+                
+                ctx.fillStyle = `rgba(64, 224, 208, ${alpha})`; 
+                ctx.font = "bold 18px 'Microgramma'";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Subtle Glow
+                ctx.shadowColor = `rgba(64, 224, 208, ${alpha * 0.9})`;
+                ctx.shadowBlur = 4 + (pulse * 4);
+                
+                ctx.fillText("STANDBY", canvas.width / 2, canvas.height / 2);
+                ctx.shadowBlur = 0;
             }
             animationFrameId = requestAnimationFrame(draw); 
             return;
@@ -423,7 +440,7 @@ onUnmounted(() => {
 
 // Reactivity
 watch(() => props.mode, (newMode) => {
-    if (newMode === 'spectrum') {
+    if (newMode === 'spectrum' || newMode === 'off') {
         startSpectrumAnalyzer();
     } else {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
