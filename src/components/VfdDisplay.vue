@@ -66,7 +66,7 @@ watch(() => props.bootState, (newState) => {
 const startRenderLoop = () => {
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-    const FPS = 30;
+    const FPS = 40;
     const FRAME_INTERVAL = 1000 / FPS;
     let lastFrameTime = 0;
 
