@@ -839,6 +839,53 @@ const currentFilter = computed(() => {
 const handleGlitchState = (isActive) => {
     isGlitching.value = isActive;
 };
+
+// --- AUTO PERFORMANCE (Turbo Mode) ---
+const fps = ref(60);
+const fpsHistory = ref([]);
+let frameCount = 0;
+let lastTime = performance.now();
+let lastSwitchTime = 0; // Cooldown to prevent oscillation
+let perfReqId = null;
+
+const trackAndManagePerformance = () => {
+    const now = performance.now();
+    frameCount++;
+    
+    // Update FPS once per second
+    if (now - lastTime >= 1000) {
+        fps.value = frameCount;
+        frameCount = 0;
+        lastTime = now;
+        
+        // Auto-Turbo Logic
+        // Only run if we haven't switched recently (5s cooldown)
+        if (now - lastSwitchTime > 5000) {
+            if (fps.value < 30 && !isTurbo.value) {
+                // Performance Critical: Enable Turbo
+                isTurbo.value = true;
+                lastSwitchTime = now;
+                console.log("Auto-Turbo: ENABLED (Low FPS)");
+            } else if (fps.value >= 58 && isTurbo.value) {
+                // Performance Good: Disable Turbo (Try for high fidelity)
+                isTurbo.value = false;
+                lastSwitchTime = now;
+                console.log("Auto-Turbo: DISABLED (High FPS)");
+            }
+        }
+    }
+    
+    perfReqId = requestAnimationFrame(trackAndManagePerformance);
+};
+
+onMounted(() => {
+    trackAndManagePerformance();
+});
+
+onUnmounted(() => {
+    if (perfReqId) cancelAnimationFrame(perfReqId);
+});
+
 </script>
 
 <template>
