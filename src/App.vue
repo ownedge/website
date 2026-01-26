@@ -890,12 +890,7 @@ onUnmounted(() => {
 
 <template>
   <div class="crt-wrapper">
-    <!-- ... same ... -->
-    <!-- ... same ... -->
-    <!-- ... same ... -->
-    <!-- ... same ... -->
-    <!-- ... same ... -->
-    
+        
     <!-- Fixed Status LEDs -->
     <!-- Extracted Controls (LEDs + Knobs) -->
     <CrtControls
