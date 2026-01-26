@@ -472,10 +472,16 @@ const calculateSpill = (val, min, max) => {
    visually it should look OFF if power is off.
 */
 .power-off-mode .led {
-    background-color: #1a1a1a !important; /* Force dark base */
+    /* Force the "Off" state visual (Tinted Dark Plastic) */
+    /* We use !important to override .active states locally */
+    background: transparent !important; /* Clear active gradient shorthand */
+    background-color: color-mix(in srgb, var(--led-color), #000 90%) !important;
     background-image: radial-gradient(circle at center, rgba(255,255,255,0.05) 0.5px, transparent 1px) !important;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8) !important;
+    background-size: 2px 2px !important;
+    
     border-color: #161616 !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8) !important;
+    
     filter: none !important;
     animation: none !important;
 }
@@ -490,10 +496,10 @@ const calculateSpill = (val, min, max) => {
 /* 3. Turn off light spill on labels */
 .power-off-mode .led-label {
     --spill-opacity: 0% !important;
-    color: #333 !important; /* Fallback dark text */
-    text-shadow: 0 -1px 1px rgba(0,0,0,0.5) !important;
+    color: #393939 !important; /* Fallback dark text */
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.2) !important;
     background-image: none !important;
-    -webkit-text-fill-color: #333 !important;
+    -webkit-text-fill-color: #393939 !important;
 }
 
 
