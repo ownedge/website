@@ -707,11 +707,7 @@ const resetToDefaults = () => {
 
 
 
-const heroStyle = computed(() => {
-  const x = (mouseX.value - windowWidth.value / 2) * 0.005
-  const y = (mouseY.value - windowHeight.value / 2) * 0.005
-  return { transform: `translate(${-x}px, ${-y}px)` } // Inverse movement for depth
-})
+
 
 // --- Power Controls Logic ---
 import { SYSTEM_CONFIG } from './config';
@@ -920,7 +916,7 @@ const handleGlitchState = (isActive) => {
         ></div>
 
         <div class="fixed-background" @mousedown="startSelection">
-            <GridOverlay />
+            <GridOverlay v-if="!isTurbo" />
             <TrackerOverlay />
         </div>
 
@@ -941,8 +937,8 @@ const handleGlitchState = (isActive) => {
         </div>
         
         <!-- Fixed Foreground Overlays -->
-        <div class="scanlines"></div>
-        <div class="vignette"></div>
+        <div class="scanlines" v-if="!isTurbo"></div>
+        <div class="vignette" v-if="!isTurbo"></div>
 
         <!-- Global Virtual Keyboard (Mobile Only) -->
         <VirtualKeyboard />
@@ -968,7 +964,7 @@ const handleGlitchState = (isActive) => {
         <div class="sticker-wear"></div>
     </div>
   </div>
-    <GlitchEffects :active="!isBot" @glitch-playing="handleGlitchState" />
+    <GlitchEffects :active="!isBot && !isTurbo" @glitch-playing="handleGlitchState" />
 </template>
 
 <style scoped>
