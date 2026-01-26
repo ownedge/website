@@ -388,7 +388,9 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
         <div class="irc-input-row">
         <div class="input-wrapper" @click="handleInputClick">
           <div v-if="isVirtualMode" class="virtual-input-display">
-            {{ message }}<span class="cursor-block">_</span>
+            <span v-if="!message" class="cursor-block"> </span>
+            <span v-if="!message" class="virtual-placeholder">type message...</span>
+            {{ message }}<span v-if="message" class="cursor-block"> </span>
           </div>
           <input 
             v-else
@@ -712,26 +714,30 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     .virtual-input-display {
         width: 100%;
         background: transparent;
-        color: #fff;
+        color: #ffffff;
         font-family: 'Microgramma', sans-serif;
-        font-size: 0.9rem;
+        font-size: 1rem;
         padding: 0 10px;
         letter-spacing: 0.5px;
         min-height: 20px;
         pointer-events: none; /* Let wrapper click open keyboard */
-        border-bottom: 2px solid var(--color-accent);
+        border-bottom: 1px solid #4e4e4e;
     }
     
     .cursor-block {
         display: inline-block;
-        width: 10px;
-        height: 1.2em;
-        background: var(--color-accent); /* transparent block for now since user wants chars one by one */
+        width: 1px;
+        height: 1.4em;
+        background: #f1f1f1; /* transparent block for now since user wants chars one by one */
         margin-left: 2px;
         animation: blink 1s step-end infinite;
         vertical-align: bottom;
     }
     
+    .virtual-placeholder {
+        color: #6f6f6f; /* Dim placeholder style */
+    }
+
     @keyframes blink { 50% { opacity: 0; } }
 }
 </style>
