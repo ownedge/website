@@ -137,6 +137,13 @@ onMounted(() => {
   window.addEventListener('mousemove', handleCombinedMouseMove);
   window.addEventListener('mouseup', endSelection);
   window.addEventListener('resize', handleResize)
+
+  // Initial Power-On Animation Cleanup
+  if (showPowerOnAnim.value) {
+      setTimeout(() => {
+          showPowerOnAnim.value = false;
+      }, 1000);
+  }
   
   // Robust Screen Rect Init
   nextTick(() => {
@@ -256,8 +263,8 @@ const handleGlobalClick = (e) => {
 }
 
 // Power Logic
-// Power Logic
 const showPowerOffAnim = ref(false);
+const showPowerOnAnim = ref(!isBot); // Play anim on load/refresh (unless bot)
 
 watch(isPowerOn, (newVal) => {
     if (!newVal) {
@@ -274,6 +281,7 @@ watch(isPowerOn, (newVal) => {
         }, 400);
     } else {
         // Power On Trigger
+        showPowerOnAnim.value = true;
         SoundManager.resume();
         
         // We do NOTHING here except set state variables if needed.
@@ -283,6 +291,11 @@ watch(isPowerOn, (newVal) => {
         // Reset VFD to loading state for the boot sequence
         vfdBootState.value = 'loading';
         vfdMode.value = 'spectrum'; // (Or off until bootloader grabs it)
+
+        // Clear animation after it finishes
+        setTimeout(() => {
+            showPowerOnAnim.value = false;
+        }, 1000); // 1s matches animation approx
     }
 });
 
@@ -932,7 +945,7 @@ onUnmounted(() => {
       <!-- Apply 'crt-content' class for filter -->
       <div 
         class="app-container" 
-        :class="{ 'power-off-anim': showPowerOffAnim }" 
+        :class="{ 'power-off-anim': showPowerOffAnim, 'power-on-anim': showPowerOnAnim }" 
         :style="{ filter: currentFilter }"
         v-if="isPowerOn || showPowerOffAnim"
       >
@@ -1240,6 +1253,37 @@ onUnmounted(() => {
         opacity: 0;
         transform: scale(0, 0); /* Shrink to center point */
         filter: brightness(0);
+    }
+}
+
+/* CRT Power On Animation */
+.power-on-anim {
+    animation: crt-power-on 0.6s ease-out forwards;
+}
+
+@keyframes crt-power-on {
+    0% {
+        opacity: 0;
+        transform: scale(0, 0); /* Start from nothing */
+        filter: brightness(0);
+    }
+    20% {
+        opacity: 1;
+        transform: scale(1, 0.005); /* Thin Horizontal Line */
+        filter: brightness(4) contrast(3); /* Super bright flash */
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1, 1.1); /* Vertical Overshoot */
+        filter: brightness(2) contrast(1.5);
+    }
+    70% {
+        transform: scale(1, 0.95); /* Slight bounce back */
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1, 1);
+        filter: brightness(1) contrast(1);
     }
 }
 
