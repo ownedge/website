@@ -875,8 +875,6 @@ const handleGlitchState = (isActive) => {
         </div>
     </div>
     
-
-
     <!-- VFD Display (Extracted to component) -->
     <VfdDisplay 
         class="vfd-display"

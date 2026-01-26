@@ -61,86 +61,81 @@ watch(() => props.bootState, (newState) => {
     }
 });
 
-watch(() => props.mode, (newMode) => {
-    // Always restart loop on mode change to ensure freshness (if spectrum)
-    if (newMode === 'spectrum') {
-        startSpectrumAnalyzer();
-    }
-});
 
-const startSpectrumAnalyzer = () => {
+
+const startRenderLoop = () => {
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
-    const draw = () => {
+    const FPS = 30;
+    const FRAME_INTERVAL = 1000 / FPS;
+    let lastFrameTime = 0;
+
+    const draw = (timestamp) => {
+        if (!timestamp) timestamp = performance.now();
+        
+        // 1. Frame Throttling
+        const elapsed = timestamp - lastFrameTime;
+        if (elapsed < FRAME_INTERVAL) {
+            animationFrameId = requestAnimationFrame(draw);
+            return;
+        }
+        // Adjust for drift (max 2 frames to prevent catch-up spirals)
+        lastFrameTime = timestamp - (Math.min(elapsed, FRAME_INTERVAL * 2) % FRAME_INTERVAL);
+
         // Handle Boot States Override (Highest Priority)
-        // If bootState is NOT complete, we hijacked the display for the loading bar
         if (props.bootState !== 'complete') {
-             if (!vfdCanvas.value) {
+             const canvas = vfdCanvas.value;
+             if (!canvas) {
                  animationFrameId = requestAnimationFrame(draw);
                  return;
              }
-             const canvas = vfdCanvas.value;
              const ctx = canvas.getContext('2d');
              
-             // Ensure size
+             // Ensure size fixed for VFD density
              if (canvas.width !== 185) { canvas.width = 185; canvas.height = 36; }
              
              ctx.clearRect(0, 0, canvas.width, canvas.height);
              ctx.fillStyle = '#40e0d0';
 
              if (props.bootState === 'loading') {
-                 // Explosive Counting Animation
                  const progress = Math.min(props.bootProgress, 100);
-                 const targetNumber = Math.floor(progress);
+                 const countSpeed = 200; 
+                 const currentCount = Math.min(Math.floor(progress), Math.floor(Date.now() / countSpeed) % 101);
                  
-                 // Rapid counting with explosion effect
-                 const countSpeed = 200; // ms per number change
-                 const currentCount = Math.min(targetNumber, Math.floor(Date.now() / countSpeed) % 101);
-                 
-                 // Calculate scale based on number change (explosion effect)
                  const timeSinceChange = (Date.now() % countSpeed) / countSpeed;
-                 const explosionScale = 1 + (1 - timeSinceChange) * 0.5; // Starts big, shrinks to normal
+                 const explosionScale = 1 + (1 - timeSinceChange) * 0.5; 
                  
-                 // Size increases as we get closer to 100
                  const progressScale = 1 + (currentCount / 100) * 0.8;
                  const finalScale = explosionScale * progressScale;
                  
-                 // Font size grows with progress
                  const baseFontSize = 28;
                  const fontSize = baseFontSize * finalScale;
                  
                  ctx.font = `900 ${fontSize}px Microgramma, 'Arial Black', sans-serif`;
                  ctx.textAlign = 'center';
                  ctx.textBaseline = 'middle';
-                 
-                 // Keep color constant
                  ctx.fillStyle = '#40e0d0';
                  
-                 // Add glow effect that pulses
                  const glowIntensity = (1 - timeSinceChange) * 15;
                  ctx.shadowColor = `rgba(64, 224, 208, ${0.8 * (1 - timeSinceChange)})`;
                  ctx.shadowBlur = glowIntensity;
                  
-                 // Draw the number
                  ctx.fillText(String(currentCount).padStart(2, '0'), canvas.width / 2, canvas.height / 2);
-                 
-                 // Reset shadow
                  ctx.shadowBlur = 0;
                  
              } else if (props.bootState === 'connecting') {
+                 // Connecting is static text with static glow -> We could optimize further but 30fps is fine
                  ctx.fillStyle = '#40e0d0';
                  ctx.font = "bold 16px 'Microgramma'";
                  ctx.textAlign = 'center';
                  ctx.textBaseline = 'middle';
                  
-                 // Add Glow for Lit State
                  ctx.shadowColor = "rgba(64, 224, 208, 0.6)";
                  ctx.shadowBlur = 8;
                  ctx.fillText(props.statusText, canvas.width / 2, canvas.height / 2);
                  ctx.shadowBlur = 0; 
 
              } else if (props.bootState === 'ready') {
-                 // 1. Calculate Geometry
                  const width = canvas.width * 0.95;
                  const x = (canvas.width - width) / 2;
                  const height = 32; 
@@ -148,18 +143,16 @@ const startSpectrumAnalyzer = () => {
                  
                  const now = Date.now();
                  const elapsed = now - readyTimestamp.value;
-                 const blinkDuration = 20; // ms per phase
+                 const blinkDuration = 20; 
                  const blinkCount = 2;
                  const totalBlinkTime = blinkCount * 2 * blinkDuration;
                  
-                 // Phase 1: Inverted Blinking (Block with Cutout)
                  if (elapsed < totalBlinkTime) {
-                     // Draw Solid Block
                      ctx.fillStyle = '#40e0d0';
                      ctx.fillRect(x, y, width, height);
                      
                      const phase = Math.floor(elapsed / blinkDuration);
-                     const showCutout = (phase % 2 === 0); // ON phase has hole
+                     const showCutout = (phase % 2 === 0); 
                      
                      if (showCutout) {
                          ctx.globalCompositeOperation = 'destination-out';
@@ -170,14 +163,11 @@ const startSpectrumAnalyzer = () => {
                          ctx.globalCompositeOperation = 'source-over';
                      }
                  } 
-                 // Phase 2: Lit Text (Normal Text, No Block)
                  else {
                      ctx.fillStyle = '#40e0d0';
                      ctx.font = "bold 28px 'Microgramma'";
                      ctx.textAlign = 'center';
                      ctx.textBaseline = 'middle';
-                     
-                     // Add Glow for Lit State
                      ctx.shadowColor = "rgba(64, 224, 208, 0.6)";
                      ctx.shadowBlur = 8;
                      ctx.fillText(" ENTER ↵", canvas.width / 2, canvas.height / 2);
@@ -196,17 +186,16 @@ const startSpectrumAnalyzer = () => {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height); 
                 
-                // Draw Glowing "STANDBY"
+                // Draw Glowing "STANDBY" (30fps breathing is smooth enough)
                 const now = Date.now();
-                const pulse = (Math.sin(now * 0.003) + 1) / 2; // 0 to 1 over time
-                const alpha = 0.3 + (pulse * 0.1); // 0.3 to 0.7 opacity
+                const pulse = (Math.sin(now * 0.003) + 1) / 2; // 0 to 1
+                const alpha = 0.3 + (pulse * 0.1); 
                 
                 ctx.fillStyle = `rgba(64, 224, 208, ${alpha})`; 
                 ctx.font = "bold 18px 'Microgramma'";
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Subtle Glow
                 ctx.shadowColor = `rgba(64, 224, 208, ${alpha * 0.9})`;
                 ctx.shadowBlur = 4 + (pulse * 4);
                 
@@ -220,18 +209,14 @@ const startSpectrumAnalyzer = () => {
         // Normal Operation: Spectrum Analyzer
         if (props.mode !== 'spectrum') return;
         
-        if (!vfdCanvas.value) {
+        const canvas = vfdCanvas.value;
+        if (!canvas) {
              animationFrameId = requestAnimationFrame(draw);
              return;
         }
 
-        const canvas = vfdCanvas.value;
         const ctx = canvas.getContext('2d');
-        
-        if (canvas.width !== 185) {
-            canvas.width = 185;
-            canvas.height = 36;
-        }
+        if (canvas.width !== 185) { canvas.width = 185; canvas.height = 36; }
 
         // --- Easter Egg Handling ---
         const now = Date.now();
@@ -252,7 +237,7 @@ const startSpectrumAnalyzer = () => {
             ctx.textBaseline = 'middle';
 
             if (eggState.value === 'scroll') {
-                eggProgress.value += 0.007; 
+                eggProgress.value += 0.014; // Double speed due to half framerate (was 0.007)
                 const words = eggType.value.words || [];
                 const wordIndex = Math.floor(eggProgress.value * words.length);
                 
@@ -278,7 +263,7 @@ const startSpectrumAnalyzer = () => {
                     eggProgress.value = 0;
                 }
             } else if (eggState.value === 'morph') {
-                eggProgress.value += 0.006; 
+                eggProgress.value += 0.012; // Adjusted for 30fps
                 
                 const img = eggType.value.icon;
                 if (img && img.complete) {
@@ -292,17 +277,13 @@ const startSpectrumAnalyzer = () => {
                     if (eggProgress.value < inDuration) {
                         const progress = eggProgress.value / inDuration;
                         if (isDownUp) {
-                            const startY = canvas.height;
-                            yOffset = startY + (targetY - startY) * progress;
+                            yOffset = canvas.height + (targetY - canvas.height) * progress;
                         } else {
-                            const startY = -imgSize;
-                            yOffset = startY + (targetY - startY) * progress;
+                            yOffset = -imgSize + (targetY - (-imgSize)) * progress;
                         }
                     }
 
                     ctx.save();
-                    
-                    // Procedural Animation Logic
                     const time = Date.now() / 1000;
                     let rotate = 0;
                     let scaleBoost = 1.0;
@@ -310,32 +291,24 @@ const startSpectrumAnalyzer = () => {
                     let extraY = 0;
 
                     if (eggType.value.period === 'day') {
-                        // Sunny-Dude: Energetic Wobble & Breathe
                         rotate = Math.sin(time * 10) * 0.1;
                         scaleBoost = 1 + Math.sin(time * 5) * 0.05;
                     } else if (eggType.value.period === 'evening') {
-                        // Sleepy Sun: Slow Nodding
                         rotate = Math.sin(time * 2) * 0.05;
                     } else if (eggType.value.period === 'night') {
-                        // Sneaker Moon: Excited Jiggle Jump
                         extraY = Math.abs(Math.sin(time * 12)) * -5;
                         rotate = Math.sin(time * 15) * 0.08;
                     }
 
-                    // Apply transformation relative to center of icon
                     ctx.translate(targetX + imgSize/2 + extraX, yOffset + imgSize/2 + extraY);
                     ctx.rotate(rotate);
                     ctx.scale(scaleBoost, scaleBoost);
                     ctx.translate(-(imgSize/2), -(imgSize/2));
-
-                    // 1. Draw the icon as a mask
                     ctx.drawImage(img, 0, 0, imgSize, imgSize);
                     
-                    // 2. Color it teal using 'source-in'
                     ctx.globalCompositeOperation = 'source-in';
                     ctx.fillStyle = '#40e0d0';
                     ctx.fillRect(0, 0, imgSize, imgSize);
-                    
                     ctx.restore(); 
                 }
                 
@@ -360,7 +333,7 @@ const startSpectrumAnalyzer = () => {
                 particles.value.forEach(p => {
                     p.x += p.vx;
                     p.y += p.vy;
-                    p.life -= 0.02;
+                    p.life -= 0.04; // Faster decay for 30fps coherence
                     if (p.life > 0) {
                         active = true;
                         ctx.globalAlpha = p.life;
@@ -379,7 +352,6 @@ const startSpectrumAnalyzer = () => {
         }
 
         const data = SoundManager.getAudioData();
-        
         if (!data) {
              animationFrameId = requestAnimationFrame(draw);
              return;
@@ -388,21 +360,16 @@ const startSpectrumAnalyzer = () => {
         // Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Dot Matrix Config
-        // 185px width, 36px height at 100% zoom (approx)
         const dotSize = 0.5;
         const gap = 0; 
         const paddingX = 4;
         const paddingY = 2;
-        
         const step = dotSize + gap;
-        // Calculate columns based on width minus padding
-        const cols = Math.floor((canvas.width - (paddingX * 2)) / step);
-        const rows = Math.floor((canvas.height - (paddingY * 2)) / step);
         
-        ctx.fillStyle = '#48ffed'; // Teal VFD color
-        ctx.shadowColor = '#40e0d0';
-        ctx.shadowBlur = 1;
+        const cols = Math.floor((canvas.width - (paddingX * 2)) / step);
+        // Optimization: Pre-calc these colors once if possible, but assignment is cheap
+        ctx.fillStyle = '#48ffed'; 
+        // Optimization: REMOVED shadowBlur from loop. Rely on CSS filter.
 
         // Draw Visualization
         for (let i = 0; i < cols; i++) {
@@ -421,8 +388,6 @@ const startSpectrumAnalyzer = () => {
             }
         }
         
-        ctx.shadowBlur = 0; // Reset for other frames
-        
         animationFrameId = requestAnimationFrame(draw);
     };
     
@@ -431,7 +396,7 @@ const startSpectrumAnalyzer = () => {
 
 // Lifecycle
 onMounted(() => {
-    startSpectrumAnalyzer();
+    startRenderLoop();
 });
 
 onUnmounted(() => {
@@ -441,7 +406,7 @@ onUnmounted(() => {
 // Reactivity
 watch(() => props.mode, (newMode) => {
     if (newMode === 'spectrum' || newMode === 'off') {
-        startSpectrumAnalyzer();
+        startRenderLoop();
     } else {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
     }
