@@ -264,7 +264,9 @@ onUnmounted(() => {
                 <label>FEEDBACK (MAX 256):</label>
                 <div class="input-wrapper focus-locked" @click="handleInputClick">
                     <div v-if="isVirtualMode" class="virtual-input-display">
-                        {{ newEntry.message }}<span class="cursor-block">_</span>
+                        <span v-if="!newEntry.message" class="cursor-block"> </span>
+                        <span v-if="!newEntry.message" class="virtual-placeholder">type message...</span>
+                        {{ newEntry.message }}<span v-if="newEntry.message" class="cursor-block"> </span>
                     </div>
                     <input 
                       v-else
@@ -644,17 +646,22 @@ onUnmounted(() => {
         padding: 12px;
         min-height: 43px;
         pointer-events: none; /* Let wrapper click open keyboard */
-        border-bottom: 2px solid var(--color-accent);
+        border-bottom: 1px solid #4e4e4e;
     }
     
     .cursor-block {
         display: inline-block;
-        width: 10px;
-        height: 1.2em;
-        background: var(--color-accent);
-        margin-left: 2px;
+        width: 1px;
+        height: 1.4em;
+        background: #fff;
+        margin-left: 1px;
         animation: blink 1s step-end infinite;
         vertical-align: bottom;
+    }
+    
+    .virtual-placeholder {
+        color: #6f6f6f; /* Dim placeholder style */
+        position: absolute;
     }
     
     @keyframes blink { 50% { opacity: 0; } }

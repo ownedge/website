@@ -716,7 +716,7 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
         background: transparent;
         color: #ffffff;
         font-family: 'Microgramma', sans-serif;
-        font-size: 1rem;
+        font-size: 0.9rem;
         padding: 0 10px;
         letter-spacing: 0.5px;
         min-height: 20px;
