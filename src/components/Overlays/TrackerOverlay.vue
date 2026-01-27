@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import SoundManager from '../sfx/SoundManager';
+import SoundManager from '../../sfx/SoundManager';
 
 
 const props = defineProps({

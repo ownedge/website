@@ -1,19 +1,21 @@
 <script setup>
-import GridOverlay from './components/GridOverlay.vue'
+import GridOverlay from './components/Overlays/GridOverlay.vue'
+import NoiseOverlay from './components/Overlays/NoiseOverlay.vue'
 import HeroDisplay from './components/HeroDisplay.vue'
 import ContentCommander from './components/ContentCommander/ContentCommander.vue'
 import SoundManager from './sfx/SoundManager'
 import BootLoader from './components/BootLoader.vue'
 import VfdDisplay from './components/VfdDisplay.vue'
 import CrtControls from './components/CrtControls.vue'
-import TrackerOverlay from './components/TrackerOverlay.vue'
-import BezelReflection from './components/BezelReflection.vue'
-import GlitchEffects from './components/GlitchEffects.vue'
+import TrackerOverlay from './components/Overlays/TrackerOverlay.vue'
+import BezelReflection from './components/Effects/BezelReflection.vue'
+import GlitchEffects from './components/Effects/GlitchEffects.vue'
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { chatStore } from './store/chatStore';
 import { keyboardStore } from './store/keyboardStore';
 import VirtualKeyboard from './components/VirtualKeyboard.vue';
-import MatrixOverlay from './components/MatrixOverlay.vue';
+import MatrixOverlay from './components/Overlays/MatrixOverlay.vue';
+import PhosphorOverlay from './components/Overlays/PhosphorOverlay.vue';
 
 
 let cursorInterval = null;
@@ -924,7 +926,6 @@ onMounted(() => {
 onUnmounted(() => {
     if (perfReqId) cancelAnimationFrame(perfReqId);
 });
-
 </script>
 
 <template>

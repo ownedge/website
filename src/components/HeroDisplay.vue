@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, reactive, watch } from 'vue';
 import SoundManager from '../sfx/SoundManager';
-import InterferenceEffect from './InterferenceEffect.vue';
+import InterferenceEffect from './Effects/InterferenceEffect.vue';
 
 const activeKeys = reactive({
     ArrowUp: false,
