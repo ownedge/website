@@ -63,7 +63,7 @@ const VISUALIZATION_CONFIG = {
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ";
 const lastCharIndex = ref(0);
-// const hiddenInput = ref(null); -- Removed
+
 
 const addNicknameChar = (key) => {
     if (nicknameChars.value.length >= 8) return;
@@ -161,14 +161,13 @@ const triggerKeyboard = () => {
     });
 };
 
-/* Removed old handleMobileInput */
+
 
 const handleIntroKeydown = (e) => {
     if (props.isBooted || bootStage.value !== 'intro') return;
     
     // If typing in the hidden input, ignore CHARACTERS (handled by @input)
     // but allow Backspace, Enter, and Arrows to pass through.
-    // if (e.target.tagName === 'INPUT') ... -- Removed as we don't use hidden input anymore
     
     // Navigation
     if (e.key === 'ArrowRight' || e.key === 'Right') {

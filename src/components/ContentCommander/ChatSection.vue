@@ -499,7 +499,6 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     background: rgba(64, 224, 208, 0.1);
     
     /* Truncation */
-    /* max-width: 150px; -- REMOVED */
     width: 100%;
     margin-top: 4px;
     overflow: hidden;

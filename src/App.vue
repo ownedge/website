@@ -18,7 +18,7 @@ import MatrixOverlay from './components/Overlays/MatrixOverlay.vue';
 import PhosphorOverlay from './components/Overlays/PhosphorOverlay.vue';
 
 
-let cursorInterval = null;
+
 let clockInterval = null;
 const currentTime = ref('');
 
@@ -98,13 +98,11 @@ const handleGlobalMouseDown = (e) => {
 };
 
 
-
 const handleResize = () => {
     windowWidth.value = window.innerWidth
     windowHeight.value = window.innerHeight
     updateScreenRect();
 }
-
 
 const isCapsLock = ref(false);
 const isHddActive = ref(false);
@@ -369,13 +367,9 @@ const handleBootSkip = async () => {
     }, 100);
 };
 
-
 const vfdMode = ref('spectrum'); // Start with canvas for loading bar
-const vfdKnobInfo = ref({ label: '', value: '' });
 // Boot items
 const vfdBootState = ref(isBot ? 'complete' : 'loading'); // 'loading', 'ready', 'complete', 'connecting'
-const vfdStatusText = ref('wait');
-const bootProgress = ref(0);
 
 // VFD Label Glow - based on VFD activity
 const vfdLabelGlow = computed(() => {
@@ -398,7 +392,7 @@ onUnmounted(() => {
   document.removeEventListener('mouseover', handleGlobalHover);
   window.removeEventListener('keydown', handleGlobalKeydown, { capture: true });
   
-  // clearInterval(cursorInterval) // Removed legacy cleanup
+
   if (clockInterval) clearInterval(clockInterval);
 })
 
@@ -739,15 +733,7 @@ const resetToDefaults = () => {
     contrast.value = 1;
     SoundManager.setMasterVolume(0.9);
     SoundManager.playTypingSound();
-};
-
-
-
-
-
-
-
-// --- Power Controls Logic ---
+};// --- Power Controls Logic ---
 import { SYSTEM_CONFIG } from './config';
 
 const SETTINGS_KEY = 'crt_settings';
