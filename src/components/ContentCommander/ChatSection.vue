@@ -143,9 +143,15 @@ const initMap = () => {
                 const a = imgData[index + 3];
                 
                 if (a > 100 && (r + g + b) > 150) {
+                    const normY = y / height;
+                    const MAP_CROP = 0.78;
+                    
+                    // Filter South Pole
+                    if (normY > MAP_CROP) continue;
+                    
                     mapPoints.push({
                         x: x / width,
-                        y: y / height,
+                        y: normY / MAP_CROP,
                         waveOffset: (x / width) * 10 
                     });
                 }
@@ -190,6 +196,11 @@ const startMapAnimation = () => {
             canvas.height = physicalHeight;
         }
 
+        // ...
+        
+        // Define Crop Factor (Cut off bottom 20% - Antarctica & Southern Ocean)
+        const MAP_CROP = 0.78;
+
         // --- Calculate Map Geometry (Normalized) ---
         // We reuse this logic for both static cache and dynamic points
         const targetRatio = 2.0; 
@@ -198,7 +209,7 @@ const startMapAnimation = () => {
         
         if (canvasRatio > targetRatio) {
             mapH = physicalHeight;
-            mapW = mapH * targetRatio * 0.7;
+            mapW = mapH * targetRatio * 0.82;
         } else {
             mapW = physicalWidth;
             mapH = mapW / targetRatio;
@@ -220,14 +231,14 @@ const startMapAnimation = () => {
             bgCtx.fillStyle = accentColor;
             
             // Batch Draw Static Dots
-            bgCtx.globalAlpha = 0.25;
+            bgCtx.globalAlpha = 0.3;
             
             mapPoints.forEach(p => {
                 const x = (p.x * mapW) + offsetX;
                 const y = (p.y * mapH) + offsetY;
                 
                 bgCtx.beginPath();
-                const size = Math.max(0.5 * dpr, mapW / 1400);
+                const size = Math.max(0.6 * dpr, mapW / 1900);
                 bgCtx.arc(x, y, size, 0, Math.PI * 2);
                 bgCtx.fill();
             });
@@ -263,7 +274,12 @@ const startMapAnimation = () => {
              const safeLat = Math.max(-85, Math.min(85, chatStore.userLat));
              const latRad = safeLat * Math.PI / 180;
              const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
-             focusY = (0.5 - (mercN / (2 * Math.PI))) * mapH + offsetY;
+             let normY = (0.5 - (mercN / (2 * Math.PI)));
+             
+             // Apply Crop Stretch
+             normY = normY / MAP_CROP;
+             
+             focusY = normY * mapH + offsetY;
              focusX = ((chatStore.userLon + 180) / 360) * mapW + offsetX;
         }
 
@@ -317,7 +333,12 @@ const startMapAnimation = () => {
              const safeLat = Math.max(-85, Math.min(85, u.lat));
              const latRad = safeLat * Math.PI / 180;
              const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
-             const uY = (0.5 - (mercN / (2 * Math.PI))) * mapH + offsetY;
+             let normY = (0.5 - (mercN / (2 * Math.PI)));
+             
+             // Apply Crop Stretch to Users
+             normY = normY / MAP_CROP;
+             
+             const uY = normY * mapH + offsetY;
              const uX = ((u.lon + 180) / 360) * mapW + offsetX;
              
              // Draw Dot
