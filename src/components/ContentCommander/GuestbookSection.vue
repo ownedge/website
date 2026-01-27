@@ -4,6 +4,15 @@ import SoundManager from '../../sfx/SoundManager';
 import { chatStore } from '../../store/chatStore';
 import { keyboardStore } from '../../store/keyboardStore';
 
+const getFlagEmoji = (countryCode) => {
+  if (!countryCode) return '';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char =>  127397 + char.charCodeAt());
+  return String.fromCodePoint(...codePoints);
+};
+
 const entries = ref([]);
 const isModalOpen = ref(false);
 const isSubmitting = ref(false);
@@ -249,7 +258,10 @@ onUnmounted(() => {
     <div class="entries-grid">
       <div v-for="entry in entries" :key="entry.id" class="entry-box">
         <div class="entry-header">
-          <span class="entry-name">{{ entry.name || 'ANONYMOUS' }}</span>
+          <span class="entry-name">
+            {{ entry.name || 'ANONYMOUS' }}
+            <span v-if="entry.country_code" class="entry-flag" :title="entry.country_code">{{ getFlagEmoji(entry.country_code) }}</span>
+          </span>
           <span class="entry-date">{{ formatDate(entry.timestamp) }}</span>
         </div>
         <div class="entry-stars">
@@ -427,6 +439,13 @@ onUnmounted(() => {
     color: var(--color-accent);
     font-weight: bold;
     letter-spacing: 1px;
+}
+
+.entry-flag {
+    margin-left: 6px;
+    font-size: 1rem;
+    filter: grayscale(0.3);
+    vertical-align: middle;
 }
 
 .entry-date {

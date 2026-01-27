@@ -39,12 +39,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($newEntry && isset($newEntry['message'])) {
         $entries = json_decode(file_get_contents($data_file), true) ?: [];
         
+        // --- Geolocation ---
+        $ip = $_SERVER['REMOTE_ADDR'];
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+        }
+        
+        $countryCode = null;
+        // Use ip-api to get country code (low timeout to prevent blocking too long)
+        $ctx = stream_context_create(['http'=> ['timeout' => 2]]); 
+        $geo_json = @file_get_contents("http://ip-api.com/json/$ip?fields=status,countryCode", false, $ctx);
+        if ($geo_json) {
+            $geo = json_decode($geo_json, true);
+            if (isset($geo['status']) && $geo['status'] === 'success') {
+                $countryCode = $geo['countryCode'] ?? null;
+            }
+        }
+        
         $entry = [
             'id' => microtime(true) . rand(100, 999),
             'name' => isset($newEntry['name']) ? $newEntry['name'] : 'ANONYMOUS',
             'message' => $newEntry['message'],
             'rating' => isset($newEntry['rating']) ? (int)$newEntry['rating'] : 5,
-            'timestamp' => date('c')
+            'timestamp' => date('c'),
+            'country_code' => $countryCode
         ];
         
         $entries[] = $entry;
