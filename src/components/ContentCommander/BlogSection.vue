@@ -298,17 +298,22 @@ onUnmounted(() => {
     margin-bottom: 20px;
     font-size: 1.2rem;
     letter-spacing: 1px;
+    align-self: flex-start;
 }
 
 .section-content {
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .blog-layout {
     display: grid;
     grid-template-columns: 250px 1fr;
     gap: 40px;
-    min-height: 400px;
+    height: 100%;
+    min-height: 0;
     width: 100%;
 }
 
@@ -331,6 +336,9 @@ onUnmounted(() => {
     gap: 15px;
     border-right: 1px solid rgba(255,255,255,0.1);
     padding-right: 20px;
+    overflow-y: auto; /* Allow menu scrolling if needed */
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
 }
 
 .menu-item {
@@ -383,20 +391,19 @@ onUnmounted(() => {
 .blog-viewport {
     flex: 1;
     position: relative;
-    /* Remove overflow from viewport, move to content column */
     overflow: hidden; 
     display: flex;
     flex-direction: column;
+    min-height: 0; /* Critical for nested flex scrolling */
 }
 
 .post-layout {
     display: flex;
     flex: 1;
     height: 100%;
-    /* Max height constraint for scrollable area */
-    max-height: 60vh; 
     gap: 30px;
     animation: fadeIn 0.3s ease;
+    overflow: hidden; /* Ensure split pane contains scroll */
 }
 
 .post-content-column {
@@ -405,6 +412,7 @@ onUnmounted(() => {
     padding-right: 15px;
     scrollbar-width: thin;
     scrollbar-color: rgba(62, 229, 212, 0.812) transparent;
+    height: 100%; /* Ensure it fills parent */
 }
 
 /* Custom Scroll for inner content */

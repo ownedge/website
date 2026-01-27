@@ -61,6 +61,14 @@ const handleKeydown = (e) => {
         if (viewportContent.value) viewportContent.value.scrollTop += 40;
     } else if (e.key === 'ArrowUp') {
         if (viewportContent.value) viewportContent.value.scrollTop -= 40;
+    } else if (e.key === ' ') {
+        // Spacebar scrolling for reading flow
+        if (e.target.matches('input, textarea, [contenteditable]')) return;
+        
+        e.preventDefault();
+        if (viewportContent.value) {
+            viewportContent.value.scrollBy({ top: viewportContent.value.clientHeight * 0.5, behavior: 'smooth' });
+        }
     }
 }
 
@@ -134,7 +142,7 @@ onUnmounted(() => {
       />
 
       <!-- Main Contents -->
-      <div class="tui-viewport custom-scroll" :class="{ 'no-overflow': activeTab === ChatSection }" ref="viewportContent">
+      <div class="tui-viewport custom-scroll" :class="{ 'no-overflow': activeTab === ChatSection || activeTab === BlogSection || activeTab === GuestbookSection || activeTab === WhatSection }" ref="viewportContent">
           <component :is="activeTab" v-if="activeTab" />
           <div v-else class="home-placeholder">
               <!-- No content for HOME tab inside Commander, as it maps back to Hero -->

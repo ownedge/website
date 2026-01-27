@@ -50,6 +50,14 @@ const handleKeydown = (e) => {
       e.stopImmediatePropagation();
       const prevIndex = (currentIndex - 1 + businessTabs.length) % businessTabs.length;
       selectTab(prevIndex >= 0 ? businessTabs[prevIndex].id : businessTabs[businessTabs.length - 1].id);
+  } else if (e.key === ' ') {
+      // Spacebar Scroll
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const viewport = document.querySelector('.business-viewport');
+      if (viewport) {
+          viewport.scrollBy({ top: viewport.clientHeight * 0.5, behavior: 'smooth' });
+      }
   }
 };
 
@@ -136,6 +144,13 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.section-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 .section-content h3 {
     margin-top: 0;
     color: var(--color-accent);
@@ -145,13 +160,15 @@ onUnmounted(() => {
     margin-bottom: 20px;
     font-size: 1.2rem;
     letter-spacing: 1px;
+    align-self: flex-start;
 }
 
 .business-layout {
     display: grid;
     grid-template-columns: 200px 1fr;
     gap: 40px;
-    min-height: 300px;
+    height: 100%;
+    min-height: 0;
 }
 
 /* Left Menu */
@@ -161,6 +178,9 @@ onUnmounted(() => {
     gap: 15px;
     border-right: 1px solid rgba(255,255,255,0.1);
     padding-right: 20px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
 }
 
 .menu-item {
@@ -194,14 +214,29 @@ onUnmounted(() => {
 /* Right Viewport */
 .business-viewport {
     flex: 1;
-    display: grid;
-    grid-template-areas: "stack";
+    overflow-y: auto;
+    padding-right: 15px; /* Add padding for scrollbar space */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(62, 229, 212, 0.812) transparent;
+    height: 100%;
     position: relative;
+    /* Grid layout inside needed for transition stacking? 
+       Actually, if we scroll, we might not need the stack area so much, or the stack should be the scrolling content?
+       If we want "Services" and "Collabs" to transition in place, they should likely be absolute positioned?
+       Wait, if we scroll, position: absolute breaks flow. 
+       Let's use standard block flow for content. 
+       Transitions will fade out/in.
+    */
+    display: block; 
 }
+.business-viewport::-webkit-scrollbar { width: 6px; }
+.business-viewport::-webkit-scrollbar-thumb { background: rgba(64, 224, 208, 0.4); }
+.business-viewport::-webkit-scrollbar-track { background: #111; }
 
 .tab-content {
-    grid-area: stack;
-    width: 100%; /* Ensure full width */
+    width: 100%;
+    padding-bottom: 40px;
+    animation: fadeIn 0.4s ease;
 }
 
 .tab-content h4 {

@@ -200,6 +200,17 @@ const handleKeyDown = (e) => {
         }
     } else if (e.key === 'Enter' && !isSigned.value) {
         openModal();
+    } else if (e.key === ' ' && !isModalOpen.value) {
+        // Spacebar scrolling for entries
+        if (e.target.matches('input, textarea')) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const grid = document.querySelector('.entries-grid');
+        if (grid) {
+             grid.scrollBy({ top: grid.clientHeight * 0.5, behavior: 'smooth' });
+        }
     }
 };
 
