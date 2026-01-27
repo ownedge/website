@@ -6,13 +6,14 @@
       <div class="manifesto-content">
         <p class="highlight">Ownedge was born from a simple idea: that the most meaningful work happens when you care deeply about what you build — and when you choose to stand behind it.</p>
         
-        <p>We live in a world full of fast launches, disposable products, and short-term thinking. Ownedge exists as a quiet counterweight to that. It is a place to build deliberately and with craftsmanship — whether that means software, infrastructure, products, or real-world assets.</p>
+        <p>We live in a world full of fast launches, disposable products, and short-term thinking. Ownedge exists as a quiet counterweight to that. It is a place to build deliberately and with craftsmanship, whether that means software, infrastructure, products, or real-world assets.</p>
         
         <p>At its core, Ownedge is about ownership in the deepest sense: not just legal ownership, but intellectual ownership, responsibility, and pride in what exists because you made it.</p>
         
         <p>We design systems the way artisans shape objects: with attention to detail, structure, balance, and longevity. </p>
 
         <p>Our work is not about chasing trends — <span>We set the trends.</span></p>
+        <div class="meta">- P.</div>
       </div>
 
       <div class="ceo-profile">
@@ -65,7 +66,7 @@
 .manifesto-content p {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.85);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     margin-bottom: 20px;
 }
 
@@ -77,6 +78,14 @@
     border-left: 3px solid var(--color-accent);
     padding-left: 20px;
     margin-bottom: 30px;
+}
+
+.meta {
+    margin-top: 30px;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 20px;
+    font-family: 'Microgramma', 'Courier New', monospace;
 }
 
 .trend-statement {
