@@ -5,12 +5,16 @@ import { chatStore } from '../../store/chatStore';
 import { keyboardStore } from '../../store/keyboardStore';
 
 const getFlagEmoji = (countryCode) => {
-  if (!countryCode) return '';
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char =>  127397 + char.charCodeAt());
-  return String.fromCodePoint(...codePoints);
+  if (!countryCode) return '🏴‍☠️'; 
+  try {
+      const codePoints = countryCode
+        .toUpperCase()
+        .split('')
+        .map(char =>  127397 + char.charCodeAt());
+      return String.fromCodePoint(...codePoints);
+  } catch (e) {
+      return '🏴‍☠️';
+  }
 };
 
 const entries = ref([]);
@@ -288,13 +292,11 @@ onUnmounted(() => {
         <div class="entry-header">
           <span class="entry-name">
             {{ entry.name || 'ANONYMOUS' }}
-            <span v-if="entry.country_code" class="entry-flag" :title="entry.country_code">{{ getFlagEmoji(entry.country_code) }}</span>
+            <span class="entry-flag" :title="entry.country_code || 'Unknown Region'">{{ getFlagEmoji(entry.country_code) }}</span>
           </span>
           <span class="entry-date">{{ formatDate(entry.timestamp) }}</span>
         </div>
-        <div class="entry-stars">
-          <span v-for="n in 5" :key="n" class="star" :class="{ filled: n <= entry.rating }">★</span>
-        </div>
+
         <p class="entry-message">{{ entry.message }}</p>
       </div>
     </div>
@@ -505,20 +507,7 @@ onUnmounted(() => {
     color: #555;
 }
 
-.entry-stars {
-    margin-bottom: 15px;
-    font-size: 0.9rem;
-}
 
-.star {
-    color: #222;
-    margin-right: 2px;
-}
-
-.star.filled {
-    color: #ffcc00;
-    text-shadow: 0 0 5px rgba(255, 204, 0, 0.4);
-}
 
 .entry-message {
     font-size: 1rem;
