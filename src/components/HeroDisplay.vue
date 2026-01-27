@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, reactive, watch } from 'vue';
 import SoundManager from '../sfx/SoundManager';
+import InterferenceEffect from './InterferenceEffect.vue';
 
 const activeKeys = reactive({
     ArrowUp: false,
@@ -15,6 +16,7 @@ const activeKeys = reactive({
 });
 
 let comboStarted = false;
+const interferenceRef = ref(null);
 
 const isUp = (k) => k === 'ArrowUp' || k === 'Up';
 const isDown = (k) => k === 'ArrowDown' || k === 'Down';
@@ -68,29 +70,41 @@ const triggerExplosion = () => {
         explosionStyles.value = new Array(titleText.value.length).fill({});
     }
 
-    // Explode
-    SoundManager.playGlitchSound(); // Use glitch sound for impact
+    // Explode Sound
+    SoundManager.playGlitchSound(); 
     
-    // Generate random velocities
-    explosionStyles.value = titleText.value.split('').map(() => {
-        const rX = (Math.random() - 0.5) * 800; // Spread x
-        const rY = (Math.random() - 0.5) * 800; // Spread y
-        const rot = (Math.random() - 0.5) * 720; // Spin
-        return {
-            transform: `translate(${rX}px, ${rY}px) rotate(${rot}deg)`,
-            opacity: 0,
-            transition: 'transform 0.8s cubic-bezier(0.1, 0.7, 1.0, 0.1), opacity 0.8s ease-out'
-        };
-    });
+    // Trigger Interference Effect
+    if (interferenceRef.value) {
+        // Target specifically the title container or span
+        // Note: The title is made of spans, but we want to explode the "Word" visual.
+        // We can pass the parent .title element's font info.
+        const titleEl = document.querySelector('.hero-display .title');
+        
+        if (titleEl) {
+            const rect = titleEl.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(titleEl);
+            
+            // Construct font string manually for Canvas
+            const font = `${computedStyle.fontWeight} ${computedStyle.fontSize} ${computedStyle.fontFamily}`;
+            
+            interferenceRef.value.explodeText(rect, "OWNEDGE", { font });
+        }
+    }
+    
+    // Hide Text Instantly
+    explosionStyles.value = titleText.value.split('').map(() => ({
+        opacity: 0,
+        transition: 'opacity 0.05s linear'
+    }));
 
-    // Reassemble
+    // Reassemble (Bounce Back)
     setTimeout(() => {
        explosionStyles.value = titleText.value.split('').map(() => ({
-            transform: 'translate(0, 0) rotate(0deg)',
+            transform: 'translate(0, 0)',
             opacity: 1,
-            transition: 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' // bouncier return
+            transition: 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)' 
        }));
-    }, 1000);
+    }, 1500); // Wait for particles to mostly dissipate
 };
 
 const titleFull = "OWNEDGE";
@@ -275,6 +289,8 @@ onUnmounted(() => {
         </svg>
         <div class="hint-label">Keyboard<span class="key-label">ON</span></div>
     </div>
+    
+    <InterferenceEffect ref="interferenceRef" />
   </div>
 </template>
 
