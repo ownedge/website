@@ -406,11 +406,11 @@ const handleGlobalKeydown = (e) => {
   
   if (isUpKey) isUpHeld.value = true;
 
-  // 1A. Matrix Easter Egg Detection (OWNEDGE)
+  // 1A. Matrix Easter Egg Detection (GOD)
   // Only trigger if on Hero Section (activeTabIndex === 0)
   if (activeTabIndex.value === 0 && !showMatrixAnim.value) {
       if (/^[a-zA-Z]$/.test(e.key)) {
-          matrixKeyBuffer += e.key.toUpperCase();
+          matrixKeyBuffer += e.key;
           if (matrixKeyBuffer.length > 20) matrixKeyBuffer = matrixKeyBuffer.slice(-20);
           
           if (matrixKeyBuffer.endsWith('GOD')) {
