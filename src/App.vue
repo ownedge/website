@@ -63,8 +63,8 @@ const isMobile = computed(() => windowWidth.value <= 900);
 
 const tabs = [
   { id: 'home', name: 'HOME' },
-  { id: 'what', name: 'WHAT' },
   { id: 'why', name: 'WHY' },
+  { id: 'what', name: 'WHAT' },
   { id: 'blog', name: 'BLOG' },
   { id: 'guestbook', name: 'GUESTBOOK' },
   { id: 'chat', name: 'CHAT' }
