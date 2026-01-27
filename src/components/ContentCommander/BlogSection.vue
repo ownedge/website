@@ -167,6 +167,9 @@ const copyLink = async () => {
         setTimeout(() => {
             showCopyHint.value = false;
         }, 2000);
+
+        // Report Share
+        fetch(`/api/blog.php?action=share&id=${activePostId.value}`);
     } catch (err) {
         console.error('Failed to copy', err);
     }

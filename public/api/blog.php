@@ -11,9 +11,62 @@ $blogDir = __DIR__ . '/../blog';
 $statsFile = $blogDir . '/stats.json';
 
 // Initialize stats file if needed
-// Initialize stats file if needed
 if (!file_exists($statsFile)) {
     file_put_contents($statsFile, json_encode([]));
+}
+
+// EMAIL NOTIFICATION HELPER
+function send_notification($type, $post_id) {
+    // --- METADATA CAPTURE (Ported from chat.php) ---
+    $ip = $_SERVER['REMOTE_ADDR'];
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+    } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    }
+
+    // User Agent Parsing (Basic OS/Browser)
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+    $os = "Unknown OS";
+    if (preg_match('/windows|win32/i', $ua)) $os = "Windows";
+    else if (preg_match('/macintosh|mac os x/i', $ua)) $os = "macOS";
+    else if (preg_match('/linux/i', $ua)) $os = "Linux";
+    else if (preg_match('/iphone|ipad|ipod/i', $ua)) $os = "iOS";
+    else if (preg_match('/android/i', $ua)) $os = "Android";
+
+    $browser = "Unknown Browser";
+    if (preg_match('/firefox/i', $ua)) $browser = "Firefox";
+    else if (preg_match('/chrome/i', $ua)) $browser = "Chrome";
+    else if (preg_match('/safari/i', $ua)) $browser = "Safari";
+    else if (preg_match('/edge/i', $ua)) $browser = "Edge";
+    else if (preg_match('/opera|opr/i', $ua)) $browser = "Opera";
+
+    // Geolocation Lookup (ip-api.com)
+    $location = "Unknown Location";
+    $geo_json = @file_get_contents("http://ip-api.com/json/$ip?fields=status,country,city,isp");
+    if ($geo_json) {
+        $geo_data = json_decode($geo_json, true);
+        if ($geo_data && $geo_data['status'] === 'success') {
+            $location = "{$geo_data['city']}, {$geo_data['country']} (ISP: {$geo_data['isp']})";
+        }
+    }
+
+    $admin_email = "hello@ownedge.com"; 
+    $subject = "OWNEDGE: Intelligence Briefing - $type";
+    $body = "INTELLIGENCE REPORT\n";
+    $body .= "====================\n";
+    $body .= "ACTION      : $type\n";
+    $body .= "TARGET ID   : $post_id\n";
+    $body .= "TIMESTAMP   : " . date('Y-m-d H:i:s') . "\n";
+    $body .= "IP ADDRESS  : $ip\n";
+    $body .= "LOCATION    : $location\n";
+    $body .= "OPERATING SYS: $os\n";
+    $body .= "BROWSER     : $browser\n\n";
+    $body .= "RAW UA      : $ua\n";
+    $body .= "====================";
+    
+    $headers = "From: blog-monitor@ownedge.com";
+    @mail($admin_email, $subject, $body, $headers);
 }
 
 // Helper for atomic updates
@@ -125,11 +178,25 @@ if ($action === 'kudo') {
     
     $result = updateStat($id, 'kudos');
     if ($result) {
+        send_notification("KUDOS RECEIVED", $id);
         echo json_encode($result);
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Lock failed']);
     }
+    exit;
+}
+
+if ($action === 'share') {
+    $id = $_GET['id'] ?? null;
+    if (!$id) { echo json_encode(['error' => 'Missing ID']); exit; }
+    
+    // We don't track share count in stats.json currently, but we can if expected.
+    // user instruction: "send email report when someone clicks kudos or share"
+    // doesn't explicitly ask for share count tracking, just email.
+    
+    send_notification("POST SHARED", $id);
+    echo json_encode(["status" => "ok"]);
     exit;
 }
 
