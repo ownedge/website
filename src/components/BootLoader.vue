@@ -360,10 +360,10 @@ const handleConnect = async () => {
        const barLineIdx = bootMessages.value.length;
        bootMessages.value.push(''); // Placeholder for animated bar
        for (let p = 0; p <= 100; p += 5) {
-           const bars = '█'.repeat(Math.floor(p / 10));
+           const bars = '█'.repeat(Math.floor(p / 20));
            const spaces = ' '.repeat(10 - Math.floor(p / 10));
            bootMessages.value[barLineIdx] = parseMessage(`> DEFERRED DIGITAL LINK [${bars}${spaces}] ${p}%`);
-           await new Promise(r => setTimeout(r, 40));
+           await new Promise(r => setTimeout(r, 5));
        }
        handleSkip(); 
        return;

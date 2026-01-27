@@ -49,6 +49,8 @@ const checkIsSigned = () => {
 
 const openModal = () => {
     if (isSigned.value) return;
+    // Pre-fill nickname from chat store
+    newEntry.value.name = chatStore.nickname || '';
     isModalOpen.value = true;
     SoundManager.playTypingSound();
 };
@@ -81,12 +83,21 @@ const setRating = (val) => {
     SoundManager.playTypingSound();
 };
 
+const activeField = ref('message');
+const nicknameInput = ref(null);
+
+const setActive = (field) => {
+    activeField.value = field;
+};
+
 const focusInput = () => {
     // Only focus if NOT mobile, otherwise we keep virtual keyboard
     if (window.innerWidth > 900) {
         nextTick(() => {
-            if (messageInput.value) {
+            if (activeField.value === 'message' && messageInput.value) {
                 messageInput.value.focus();
+            } else if (activeField.value === 'nickname' && nicknameInput.value) {
+                nicknameInput.value.focus();
             }
         });
     }
@@ -100,19 +111,25 @@ const openVirtualKeyboard = () => {
     
     keyboardStore.open((key) => {
         if (key === 'BACKSPACE') {
-            newEntry.value.message = newEntry.value.message.slice(0, -1);
+            if (activeField.value === 'message') {
+                 newEntry.value.message = newEntry.value.message.slice(0, -1);
+            } else {
+                 newEntry.value.name = newEntry.value.name.slice(0, -1);
+            }
         } else if (key === 'ENTER') {
             handleSubmit();
-            // handleSubmit will handle closing and scrolling
         } else {
-             if (newEntry.value.message.length < 256) {
-                 newEntry.value.message += key;
+             if (activeField.value === 'message') {
+                 if (newEntry.value.message.length < 256) newEntry.value.message += key;
+             } else {
+                 if (newEntry.value.name.length < 30) newEntry.value.name += key;
              }
         }
     });
 };
 
-const handleInputClick = () => {
+const handleInputClick = (field) => {
+    setActive(field);
     if (window.innerWidth <= 900) {
         if (!keyboardStore.isVisible.value) {
            openVirtualKeyboard();
@@ -124,6 +141,7 @@ const handleInputClick = () => {
 
 watch(isModalOpen, (newVal) => {
     if (newVal) {
+        activeField.value = 'message'; // Reset to message on open
         if (window.innerWidth <= 900) {
             setTimeout(openVirtualKeyboard, 300);
         } else {
@@ -135,8 +153,8 @@ watch(isModalOpen, (newVal) => {
 const handleSubmit = async () => {
     if (isSubmitting.value || !newEntry.value.message.trim()) return;
     
-    // Ensure we use the latest chat nickname
-    newEntry.value.name = chatStore.nickname || 'ANONYMOUS';
+    // Ensure we have a name (default to ANONYMOUS if left blank, though UI might require it)
+    if (!newEntry.value.name.trim()) newEntry.value.name = 'ANONYMOUS';
     
     isSubmitting.value = true;
     try {
@@ -186,23 +204,33 @@ const formatDate = (iso) => {
 const handleKeyDown = (e) => {
     if (isModalOpen.value) {
         // If the modal is open, we consume these specific keys and prevent them from bubbling
-        if (['ArrowLeft', 'ArrowRight', 'Escape', 'Esc', 'Enter'].includes(e.key)) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Escape', 'Esc', 'Enter', 'Tab'].includes(e.key)) {
             e.stopImmediatePropagation();
             e.stopPropagation();
             
-            if (showSuccess.value) return; // Don't do anything else if we'm in success state
+            if (showSuccess.value) return; 
 
             if (e.key === 'Escape' || e.key === 'Esc') {
                 closeModal();
-            } else if (e.key === 'ArrowLeft') {
+            } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                newEntry.value.rating = Math.max(0, newEntry.value.rating - 1);
+                activeField.value = 'message';
+                focusInput();
                 SoundManager.playTypingSound();
-            } else if (e.key === 'ArrowRight') {
+            } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                newEntry.value.rating = Math.min(5, newEntry.value.rating + 1);
+                activeField.value = 'nickname';
+                focusInput();
+                SoundManager.playTypingSound();
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                activeField.value = (activeField.value === 'message') ? 'nickname' : 'message';
+                focusInput();
                 SoundManager.playTypingSound();
             } else if (e.key === 'Enter') {
+                // Submit on Enter if we are in nickname field or just general submit?
+                // User might want to insert newlines in message?
+                // For now, Enter submits form as requested "Enter to sign"
                 e.preventDefault();
                 handleSubmit();
             }
@@ -283,13 +311,19 @@ onUnmounted(() => {
           
           <div v-if="!showSuccess" class="form-body">
 
+
             <div class="form-group">
                 <label>FEEDBACK (MAX 256):</label>
-                <div class="input-wrapper focus-locked" @click="handleInputClick">
+                <div 
+                    ref="messageWrapper"
+                    class="input-wrapper focus-locked" 
+                    :class="{ active: activeField === 'message' }" 
+                    @click="handleInputClick('message')"
+                >
                     <div v-if="isVirtualMode" class="virtual-input-display">
-                        <span v-if="!newEntry.message" class="cursor-block"> </span>
+                        <span v-if="!newEntry.message && activeField === 'message'" class="cursor-block"> </span>
                         <span v-if="!newEntry.message" class="virtual-placeholder">type message...</span>
-                        {{ newEntry.message }}<span v-if="newEntry.message" class="cursor-block"> </span>
+                        {{ newEntry.message }}<span v-if="newEntry.message && activeField === 'message'" class="cursor-block"> </span>
                     </div>
                     <input 
                       v-else
@@ -298,32 +332,51 @@ onUnmounted(() => {
                       type="text" 
                       maxlength="256" 
                       placeholder="type message..."
-                      :readonly="keyboardStore.isVisible.value && window.innerWidth <= 900" 
+                      :readonly="keyboardStore.isVisible.value && window.innerWidth <= 900"
+                      @focus="setActive('message')"
                     />
                 </div>
             </div>
 
             <div class="form-group">
-                <label>RATING:</label>
-                <div class="star-rating-input">
-                    <span 
-                      v-for="n in 5" 
-                      :key="n" 
-                      class="interactive-star" 
-                      :class="{ filled: n <= newEntry.rating }"
-                      @click="setRating(n)"
-                    >★</span>
+                <label>NICKNAME:</label>
+                <div 
+                    ref="nicknameWrapper"
+                    class="input-wrapper focus-locked" 
+                    :class="{ active: activeField === 'nickname' }" 
+                    @click="handleInputClick('nickname')"
+                >
+                    <div v-if="isVirtualMode" class="virtual-input-display">
+                        <span v-if="!newEntry.name && activeField === 'nickname'" class="cursor-block"> </span>
+                        <span v-if="!newEntry.name" class="virtual-placeholder">ANONYMOUS</span>
+                        {{ newEntry.name }}<span v-if="newEntry.name && activeField === 'nickname'" class="cursor-block"> </span>
+                    </div>
+                    <input 
+                      v-else
+                      ref="nicknameInput"
+                      v-model="newEntry.name" 
+                      type="text" 
+                      maxlength="30" 
+                      placeholder="ANONYMOUS" 
+                      :readonly="keyboardStore.isVisible.value && window.innerWidth <= 900"
+                      @focus="setActive('nickname')"
+                    />
                 </div>
             </div>
 
             <div class="modal-actions">
-                <button 
-                  class="submit-btn" 
-                  @click="handleSubmit" 
-                  :disabled="isSubmitting || !newEntry.message.trim()"
+                <div 
+                  class="submit-btn-styled" 
+                  :class="{ disabled: isSubmitting || !newEntry.message.trim() }"
+                  @click="handleSubmit"
                 >
-                    {{ isSubmitting ? '[ TRANSMITTING... ]' : '[ SUBMIT ]' }}
-                </button>
+                    <div class="submit-highlight"></div>
+                    <span class="submit-text">{{ isSubmitting ? 'TRANSMITTING...' : 'TRANSMIT' }}</span>
+                </div>
+                <div 
+                    class="enter-hint" 
+                    :class="{ visible: !isSubmitting && newEntry.message.trim() }"
+                > <span class="key-hint">⏎</span></div>
             </div>
           </div>
 
@@ -539,7 +592,33 @@ onUnmounted(() => {
 }
 
 .form-body {
-    padding: 30px;
+    padding: 24px 30px 9px 30px;
+    position: relative;
+}
+
+/* New Fade/Blur/Zoom Highlight */
+.input-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border: 1px solid var(--color-accent);
+    background: rgba(64, 224, 208, 0.08); /* Subtle focus tint */
+    box-shadow: 0 0 15px rgba(64, 224, 208, 0.1);
+    z-index: 5;
+    pointer-events: none;
+    border-radius: 4px;
+    
+    /* Animation Initial State */
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(4px);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.input-wrapper.active::before {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
 }
 
 .form-group {
@@ -592,29 +671,105 @@ onUnmounted(() => {
 
 .modal-actions {
     display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 30px;
+    justify-content: center; /* Keep button perfectly centered */
+    align-items: center;
+    position: relative;
 }
 
-.submit-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-accent);
+.enter-hint {
+    position: absolute;
+    left: calc(50% + 90px); /* 180px est button width / 2 + spacing */
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px); /* Vertical center + toggle slide */
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: bold;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
     font-family: 'Microgramma', monospace;
-    cursor: pointer;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.enter-hint.visible {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+.key-hint {
+    display: inline-block;
+    padding: 0 4px; /* Minimal spacing */
+    color: #666;
+    font-size: 1.4rem;
+    vertical-align: middle;
+}
+
+.submit-btn-styled {
+    position: relative;
+    border-radius: 4px;
+    font-family: 'Microgramma', monospace;
     font-size: 1.1rem;
-    transition: all 0.2s;
+    font-weight: bold;
+    color: var(--color-accent);
+    cursor: pointer;
+    text-transform: uppercase;
+    margin-top: -5px;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    border: 1px solid transparent; 
+    transition: all 0.2s ease;
+    user-select: none;
+    overflow: hidden; /* For highlight containment */
+    background: rgba(0,0,0,0.5); /* Slight dims */
 }
 
-.submit-btn:disabled {
-    color: #6e6e6e;
-    cursor: not-allowed;
-    opacity: 1; /* Override default opacity */
+.submit-highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--color-accent);
+    transform: translateX(-101%);
+    /* "Crazy" Elastic: Big wind-up (-0.8) and big overshoot (1.9) */
+    transition: transform 0.4s cubic-bezier(0.5, -0.8, 0.5, 1.9);
+    z-index: 0;
+    animation: glitch-jitter 4s infinite;
+    transform: skewX(-20deg) translateX(-250%);
+    border-radius: 3px 6px 1px 2px;
 }
 
-.submit-btn:not(:disabled):hover {
-    text-shadow: 0 0 10px var(--color-accent);
+@keyframes glitch-jitter {
+    0%, 92% { clip-path: inset(0 0 0 0); opacity: 1; }
+    93% { clip-path: inset(10% 0 30% 0); opacity: 0.8; }
+    95% { clip-path: inset(40% 0 10% 0); opacity: 1; }
+    98% { clip-path: inset(0 0 50% 0); opacity: 0.9; }
+    100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+.submit-text {
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+/* Active State (When valid, show highlight permanently, not just hover) */
+.submit-btn-styled:not(.disabled) .submit-highlight {
+    transform: skewX(-10deg) translateX(0);
+}
+
+.submit-btn-styled:not(.disabled) .submit-text {
+    color: #000;
+}
+
+
+
+.submit-btn-styled.disabled {
+    color: #555;
+    cursor: default;
+    opacity: 0.5;
 }
 
 .success-message {
@@ -675,18 +830,27 @@ onUnmounted(() => {
         font-size: 0.95rem;
         padding: 12px;
         min-height: 43px;
+        line-height: 1.5; /* Align text */
         pointer-events: none; /* Let wrapper click open keyboard */
         border-bottom: 1px solid #4e4e4e;
+    }
+
+    /* Force line height existence even when empty */
+    .virtual-input-display::after {
+        content: '\00a0';
+        display: inline-block;
+        width: 0;
+        visibility: hidden;
     }
     
     .cursor-block {
         display: inline-block;
         width: 1px;
-        height: 1.4em;
+        height: 1.1em; /* Reduced from 1.4em to prevent expansion */
         background: #fff;
         margin-left: 1px;
         animation: blink 1s step-end infinite;
-        vertical-align: bottom;
+        vertical-align: middle;
     }
     
     .virtual-placeholder {

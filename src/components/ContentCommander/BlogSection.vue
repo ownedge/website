@@ -638,10 +638,13 @@ onUnmounted(() => {
     .menu-item {
         flex-direction: column;
         width: 120px; /* Smaller reserved space */
+        height: 56px; /* Fixed height to prevent jump */
         flex-shrink: 0;
         padding: 8px;
         background: rgba(255, 255, 255, 0.05); /* Subtle background for separation */
         border: 1px solid transparent;
+        overflow: hidden;
+        justify-content: center;
     }
 
     .menu-item.active {
