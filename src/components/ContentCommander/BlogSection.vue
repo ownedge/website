@@ -619,6 +619,10 @@ onUnmounted(() => {
 }
 
 @media (max-width: 900px) {
+    .section-content {
+        padding: 20px 15px 0 15px;
+    }
+
     .blog-layout {
         grid-template-columns: 1fr;
         gap: 20px;

@@ -377,6 +377,10 @@ onUnmounted(() => {
         margin-bottom: 15px;
     }
 
+    .section-content {
+        padding: 20px 15px 0 15px;
+    }
+
     .business-layout {
         grid-template-columns: 1fr;
         gap: 20px;

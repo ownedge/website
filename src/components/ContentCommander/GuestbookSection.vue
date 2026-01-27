@@ -790,6 +790,10 @@ onUnmounted(() => {
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
 @media (max-width: 900px) {
+    .section-content {
+        padding: 20px 15px 0 15px;
+    }
+
     .entries-grid {
         grid-template-columns: 1fr;
         scrollbar-width: none;
