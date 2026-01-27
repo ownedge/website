@@ -12,6 +12,7 @@ import { inject } from 'vue';
 
 const activePost = computed(() => posts.value.find(p => p.id === activePostId.value));
 const isTitleOverflowing = ref(false);
+const viewTimer = ref(null);
 
 const checkTitleOverflow = async () => {
     isTitleOverflowing.value = false;
@@ -101,11 +102,14 @@ const selectPost = async (id, isInitial = false) => {
     error.value = null;
     postContent.value = ''; // Clear prev content
     
-    // Fetch content and register view in parallel
+    // Clear existing timer if any (debounce/cancel previous view count)
+    if (viewTimer.value) clearTimeout(viewTimer.value);
+
+    // Fetch content and stats immediately (read-only stats)
     try {
         const [contentRes, statsRes] = await Promise.all([
-            fetch(`/blog/${post.file}?t=${Date.now()}`), // Cache bust content too
-            fetch(`/api/blog.php?action=view&id=${id}&t=${Date.now()}`) 
+            fetch(`/blog/${post.file}?t=${Date.now()}`), 
+            fetch(`/api/blog.php?action=stats&id=${id}&t=${Date.now()}`) 
         ]);
 
         if (contentRes.ok) {
@@ -117,6 +121,21 @@ const selectPost = async (id, isInitial = false) => {
         if (statsRes.ok) {
             postStats.value = await statsRes.json();
         }
+
+        // Delay view counting (5 seconds trigger)
+        viewTimer.value = setTimeout(() => {
+            if (activePostId.value === id) {
+                fetch(`/api/blog.php?action=view&id=${id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        // Only update stats if we represent the current post (race condition check)
+                        if (activePostId.value === id) {
+                            postStats.value = data; 
+                        }
+                    })
+                    .catch(e => console.error("Failed to count view", e));
+            }
+        }, 5000);
 
     } catch (e) {
         postContent.value = '<p>Network error.</p>';

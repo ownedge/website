@@ -231,7 +231,8 @@ const startMapAnimation = () => {
             bgCtx.fillStyle = accentColor;
             
             // Batch Draw Static Dots
-            bgCtx.globalAlpha = 0.3;
+            // Reduce opacity on mobile to avoid clutter
+            bgCtx.globalAlpha = window.innerWidth <= 900 ? 0.1 : 0.3;
             
             mapPoints.forEach(p => {
                 const x = (p.x * mapW) + offsetX;
