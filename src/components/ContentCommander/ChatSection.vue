@@ -168,6 +168,9 @@ const startMapAnimation = () => {
     let bgCtx = bgCanvas.getContext('2d');
     let lastW = 0, lastH = 0;
     
+    // Animation State
+    let animStartTime = performance.now();
+    
     // Get accent color
     const computedStyle = getComputedStyle(document.body);
     const accentColor = computedStyle.getPropertyValue('--color-accent').trim() || '#40e0d0'; // Fallback
@@ -187,6 +190,24 @@ const startMapAnimation = () => {
             canvas.height = physicalHeight;
         }
 
+        // --- Calculate Map Geometry (Normalized) ---
+        // We reuse this logic for both static cache and dynamic points
+        const targetRatio = 2.0; 
+        const canvasRatio = (physicalWidth / physicalHeight) || 1; // Avoid divide by zero
+        let mapW, mapH;
+        
+        if (canvasRatio > targetRatio) {
+            mapH = physicalHeight;
+            mapW = mapH * targetRatio * 0.7;
+        } else {
+            mapW = physicalWidth;
+            mapH = mapW / targetRatio;
+        }
+        
+        const offsetX = (physicalWidth - mapW) / 2;
+        const offsetY = (physicalHeight - mapH) / 2;
+
+
         // --- 1. Draw/Update Static Background Cache (Only on Resize) ---
         if (sizeChanged || lastW !== physicalWidth || lastH !== physicalHeight) {
             bgCanvas.width = physicalWidth;
@@ -198,26 +219,7 @@ const startMapAnimation = () => {
             bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
             bgCtx.fillStyle = accentColor;
             
-            // Calculate Map Geometry
-            const targetRatio = 2.0; 
-            const canvasRatio = bgCanvas.width / bgCanvas.height;
-            let mapW, mapH;
-            
-            if (canvasRatio > targetRatio) {
-                mapH = bgCanvas.height;
-                mapW = mapH * targetRatio * 0.7;
-            } else {
-                mapW = bgCanvas.width;
-                mapH = mapW / targetRatio;
-            }
-            
-            // We need to store these for the dynamic layer too, but they depend on width.
-            // For now, re-calc is cheap in dynamic loop, but the drawing is the bottleneck.
-            const offsetX = (bgCanvas.width - mapW) / 2;
-            const offsetY = (bgCanvas.height - mapH) / 2;
-            
             // Batch Draw Static Dots
-            bgCtx.fillStyle = accentColor;
             bgCtx.globalAlpha = 0.25;
             
             mapPoints.forEach(p => {
@@ -234,25 +236,58 @@ const startMapAnimation = () => {
         // --- 2. Main Render Loop (Per Frame) ---
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // A. Blit the cached background (Fast!)
+        // --- INTRO ANIMATION LOGIC ---
+        const duration = 4000;
+        const elapsed = time - animStartTime;
+        let progress = Math.min(elapsed / duration, 1);
+        
+        // Easing: Exponential Ease Out
+        // 1 - Math.pow(2, -10 * progress) for standard ease out
+        const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+        
+        // Calculate Camera
+        // Start: Scale 4, Center = User Pos
+        // End: Scale 1, Center = Screen Center
+        const startScale = 4.0;
+        const endScale = 1.0;
+        const currentScale = startScale + (endScale - startScale) * ease;
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Identify User Position for Focus
+        let focusX = centerX;
+        let focusY = centerY;
+        
+        if (chatStore.userLat && chatStore.userLon) {
+             const safeLat = Math.max(-85, Math.min(85, chatStore.userLat));
+             const latRad = safeLat * Math.PI / 180;
+             const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
+             focusY = (0.5 - (mercN / (2 * Math.PI))) * mapH + offsetY;
+             focusX = ((chatStore.userLon + 180) / 360) * mapW + offsetX;
+        }
+
+        // Interpolate Focus Point from User (Start) to Center (End)
+        // If we want a pure zoom out from the point, we keep the focus point on the User until the end?
+        // User request: "zoom out the world map starting centered on user's location"
+        // This usually implies the camera moves from User -> Center of Map OR just zooms out while focused on User?
+        // "Zoom out the world map... starting centered on user" usually implies tracking back to the full view.
+        // Full view center is centerX, centerY.
+        // Start view center is focusX, focusY.
+        
+        const currentFocusX = focusX + (centerX - focusX) * ease;
+        const currentFocusY = focusY + (centerY - focusY) * ease;
+        
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(currentScale, currentScale);
+        ctx.translate(-currentFocusX, -currentFocusY);
+
+        
+        // A. Blit the cached background
         ctx.globalAlpha = 1.0;
         ctx.drawImage(bgCanvas, 0, 0);
         
-        // B. Re-calc geometry for dynamic users (Fast enough, simple math)
-        // (Could optimize by sharing vars but this is negligible compared to draw calls)
-        const targetRatio = 2.0; 
-        const canvasRatio = canvas.width / canvas.height;
-        let mapW, mapH;
-        if (canvasRatio > targetRatio) {
-            mapH = canvas.height;
-            mapW = mapH * targetRatio * 0.7;
-        } else {
-            mapW = canvas.width;
-            mapH = mapW / targetRatio;
-        }
-        const offsetX = (canvas.width - mapW) / 2;
-        const offsetY = (canvas.height - mapH) / 2;
-
         
         // C. Draw Connected Users
         const usersToPlot = [];
@@ -309,9 +344,14 @@ const startMapAnimation = () => {
              
              ctx.globalAlpha = Math.max(0, 1 - ringPulse); 
              ctx.beginPath();
+             // Adjust ring size scaling to look good even when zoomed in
+             // If zoomed in (low 'ease'), we might want rings to be consistent visual size or logical size?
+             // Logical size works best for "world" feel.
              ctx.arc(uX, uY, dotSize + (maxRing * ringPulse), 0, Math.PI * 2);
              ctx.stroke(); 
         });
+        
+        ctx.restore();
         
         animationId = requestAnimationFrame(draw);
     };

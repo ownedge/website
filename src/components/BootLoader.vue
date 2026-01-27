@@ -588,7 +588,7 @@ onUnmounted(() => {
                         
 
 
-                        <p>WATCH INTRO?</p>
+                        <p>CONNECT TO NODE?</p>
                         
                         <div class="cookie-select-container">
                             <div 
@@ -599,12 +599,12 @@ onUnmounted(() => {
                                 class="cookie-option" 
                                 :class="{ 'active-text': introChoice === 'yes' }"
                                 @click="confirmIntroOption('yes')"
-                            >YES</div>
+                            >DIAL</div>
                             <div 
                                 class="cookie-option" 
                                 :class="{ 'active-text': introChoice === 'no' }"
                                 @click="confirmIntroOption('no')"
-                            >NO</div>
+                            >SKIP</div>
                         </div>
                         
                     </div>
