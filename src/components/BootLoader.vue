@@ -298,6 +298,8 @@ const runBiosSequence = async () => {
     if (locDisplay !== 'NET_ERR') {
         await addMessage(`> LOCATION DETECTED: ${locDisplay}`, 100);
     }
+
+    await addMessage('> READY TO CONNECT, WAITING FOR USER...', 500);
     
     emit('progress', 100);
     emit('ready'); // VFD is now ready for interaction
@@ -355,6 +357,14 @@ const handleConnect = async () => {
 
     if (introChoice.value === 'no') {
        // Minimal boot if declined (skips visualization)
+       const barLineIdx = bootMessages.value.length;
+       bootMessages.value.push(''); // Placeholder for animated bar
+       for (let p = 0; p <= 100; p += 5) {
+           const bars = '█'.repeat(Math.floor(p / 10));
+           const spaces = ' '.repeat(10 - Math.floor(p / 10));
+           bootMessages.value[barLineIdx] = parseMessage(`> DEFERRED DIGITAL LINK [${bars}${spaces}] ${p}%`);
+           await new Promise(r => setTimeout(r, 40));
+       }
        handleSkip(); 
        return;
     }
@@ -584,8 +594,6 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
-                        
-
 
                         <p>CONNECT TO NODE?</p>
                         
@@ -744,7 +752,7 @@ onUnmounted(() => {
     gap: 20px;
 }
 
-.popup-body p { font-size: 0.8rem; color: #888; margin: 0; }
+.popup-body p { font-size: 0.8rem; color: #aaa; margin: 0; }
 
 .input-group {
     display: flex;
@@ -998,7 +1006,7 @@ onUnmounted(() => {
 
 .char-label {
     font-size: 0.8rem;
-    color: #888;
+    color: #aaa;
     margin: 0;
     margin-bottom: 5px;
 }
