@@ -97,28 +97,28 @@ onUnmounted(() => {
             <h4>SERVICES</h4>
             <div class="service-grid">
               <div class="service-block">
-                <h5>INTERACTIVE SYSTEMS</h5>
-                <p>Engineering low-latency, high-fidelity interfaces and custom design systems. Specialized in WebGL, real-time visualization, and reactive architecture.</p>
+                <h5>MISSION CRITICAL</h5>
+                <p>High-integrity display and rendering systems for flight, railway, metro, and ferry operations. Powering public-facing arrival and departure screens with zero-tolerance for downtime.</p>
               </div>
               <div class="service-block">
-                <h5>CINEMATIC TECH PROPS</h5>
-                <p>Design and fabrication of period-accurate and retro-futuristic interfaces for film. Technically correct terminal systems and hardware peripherals.</p>
+                <h5>INTERACTIVE SYSTEMS</h5>
+                <p>Engineering efficient, high-fidelity interfaces and custom design systems. Specialized in WebGL, real-time visualization, and reactive architecture. Ranging from unique websites to movie tech props.</p>
+              </div>
+              <div class="service-block">
+                <h5>INFRASTRUCTURE</h5>
+                <p>Design and deployment of resilient, automated, permanent digital infrastructure. Focus on secure, high-availability architecture for modern enterprise assets.</p>
               </div>
               <div class="service-block">
                 <h5>AEROSPACE & AVIONICS</h5>
-                <p>Specialized aviation solutions including advanced flight training systems, certification protocols, and custom aircraft electronics integration.</p>
-              </div>
-              <div class="service-block">
-                <h5>PRECISION ENGINEERING</h5>
-                <p>Industrial design and manufacturing of custom equipment. Expertise in composite materials, high-precision CNC machining, and industrial 3D printing.</p>
+                <p>Specialized backcountry flight training and certification protocols. Engineering of custom avionics suites, electronics integration and upgrades.</p>
               </div>
               <div class="service-block">
                 <h5>STRATEGIC VENTURE</h5>
                 <p>Strategic guidance and seed-stage funding for technical startups. Providing the architectural and capital foundation for ambitious embryonic projects.</p>
               </div>
               <div class="service-block">
-                <h5>INFRASTRUCTURE</h5>
-                <p>Design and deployment of resilient, permanent digital infrastructure. Focus on secure, high-availability architecture for modern enterprise assets.</p>
+                <h5>PRECISION ENGINEERING</h5>
+                <p>Industrial design and manufacturing of custom equipment. Expertise in composite materials, CNC machining, 3D printing, electronics and acoustics.</p>
               </div>
             </div>
           </div>
