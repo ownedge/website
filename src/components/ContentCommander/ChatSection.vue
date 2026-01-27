@@ -509,7 +509,26 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
 </template>
 
 <style scoped>
-/* ... existing styles ... */
+.section-content {
+    display: flex;
+    flex-direction: column;
+    height: 90%;
+    padding: 0 !important;
+}
+
+.section-content h3 {
+    margin-top: 0;
+    color: var(--color-accent);
+    border-bottom: 1px solid rgba(64, 224, 208, 0.3);
+    display: inline-block;
+    padding-left: 10px;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    align-self: flex-start;
+}
+
 .mobile-users-toggle {
     display: none;
     font-size: 0.75rem;
@@ -518,8 +537,6 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     padding: 2px 6px;
     cursor: pointer;
     background: rgba(64, 224, 208, 0.1);
-    
-    /* Truncation */
     width: 100%;
     margin-top: 4px;
     overflow: hidden;
@@ -534,106 +551,33 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     color: var(--color-accent);
 }
 
-/* ... existing styles ... */
-
-@media (max-width: 900px) {
-    /* ... existing ... */
-    
-    .irc-input-row input.virtual-mode {
-        pointer-events: none; /* Disable native interaction */
-        caret-color: transparent;
-        border-bottom: 1px solid var(--color-accent); /* Make it look like a line */
-    }
-}
-
-/* ... existing styles ... */
-
-@media (max-width: 900px) {
-    .irc-container {
-        grid-template-columns: 1fr; /* Hide sidebar list */
-        position: relative;
-    }
-    .irc-sidebar {
-        display: none;
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 200px;
-        height: 100%;
-        background: #0a0a0a;
-        border-left: 1px solid #333;
-        z-index: 100;
-        padding-bottom: 20px;
-        box-shadow: -5px 0 20px rgba(0,0,0,0.5);
-    }
-    .irc-sidebar.active {
-        display: flex !important;
-    }
-    
-    .mobile-users-toggle {
-        display: block;
-    }
-    
-    .close-sidebar {
-        display: inline-block;
-    }
-
-    /* ... other existing overrides ... */
-    .irc-header .topic {
-        display: none !important; /* Hide topic for space */
-    }
-    /* ... */
-}
-</style>
-
-<style scoped>
-.section-content h3 {
-    margin-top: 0;
-    color: var(--color-accent);
-    border-bottom: 1px solid rgba(64, 224, 208, 0.3);
-    display: inline-block;
-    padding-left: 10px;
-    padding-bottom: 5px;
-    margin-bottom: 20px;
-    font-size: 1.2rem;
-    letter-spacing: 1px;
-    align-self: flex-start;
-}
-
-.section-content {
-    display: flex;
-    flex-direction: column;
-    height: 90%;
-    padding: 0 !important;
-}
-
 .irc-container {
     display: grid;
-    grid-template-columns: 1fr 200px; /* Slightly wider sidebar */
-    flex: 1; /* Fill available height */
+    grid-template-columns: 1fr 200px;
+    flex: 1;
     background: #050505;
     border: 1px solid #333;
     font-family: 'Microgramma', sans-serif;
     letter-spacing: 0.5px;
-    overflow: hidden; /* Prevent container from expanding */
+    overflow: hidden;
 }
 
 .irc-main {
     display: flex;
     flex-direction: column;
     border-right: 1px solid #333;
-    min-height: 0; /* CRITICAL: Allow flex item to shrink below content height */
-    height: 100%; /* Force it to fill the irc-container grid cell */
+    min-height: 0;
+    height: 100%;
     position: relative;
     overflow: hidden;
 }
 
 .map-bg {
     position: absolute;
-    top: 0;
+    top: 5%;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 90%;
     z-index: 0;
     pointer-events: none;
 }
@@ -676,8 +620,8 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     scrollbar-width: thin;
     scrollbar-color: #333 transparent;
     position: relative;
-    z-index: 2; /* Boost z-index just in case */
-    text-shadow: 0 1px 3px #000, 0 0 5px #000; /* Ensure legibility over bright beacons */
+    z-index: 2;
+    text-shadow: 0 1px 3px #000, 0 0 5px #000;
 }
 
 .msg { margin-bottom: 6px; line-height: 1.5; display: flex; gap: 8px; }
@@ -706,7 +650,6 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     align-items: center;
 }
 
-
 .irc-input-row input {
     flex: 1;
     background: transparent;
@@ -723,8 +666,8 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     background: #0a0a0a;
     display: flex;
     flex-direction: column;
-    min-height: 0; /* CRITICAL: Allow flex item to shrink below content height */
-    height: 100%; /* Force it to fill the irc-container grid cell */
+    min-height: 0;
+    height: 100%;
 }
 
 .sidebar-header {
@@ -740,7 +683,7 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     flex: 1;
     padding: 10px;
     font-size: 0.95rem;
-    overflow-y: auto; /* Scrollable users if list is long */
+    overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #333 transparent;
 }
@@ -756,49 +699,76 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
 
 .fade-leave-active { transition: opacity 0.5s; }
 .fade-leave-to { opacity: 0; }
+
 @media (max-width: 900px) {
+    .section-content h3 {
+        padding-top: 12px;
+    }
+
     .irc-container {
-        grid-template-columns: 1fr; /* Hide sidebar list */
+        grid-template-columns: 1fr;
         border-left: none;
         border-right: none;
         border-bottom: none;
+        position: relative;
     }
+
+    /* Mobile Drawer Sidebar */
     .irc-sidebar {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 100%;
+        background: #0a0a0a;
+        border-left: 1px solid #333;
+        z-index: 100;
+        padding-bottom: 20px;
+        box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+    }
+    
+    .irc-sidebar.active {
+        display: flex !important;
+    }
+
+    .mobile-users-toggle {
+        display: block;
+    }
+
+    .close-sidebar {
+        display: inline-block;
+    }
+
+    .irc-header .topic {
         display: none !important;
     }
-    .irc-header .topic {
-        display: none !important; /* Hide topic for space */
-    }
-    .topic-meta {
-        font-size: 0.6rem;
-    }
-    .chan {
-        font-size: 0.8rem;
-    }
-    .msg-time {
-        font-size: 0.75rem;
-    }
-    .msg-text, .msg-user {
-        font-size: 0.85rem;
-    }
-    .irc-input-row {
-        padding: 10px;
-    }
-    .irc-input-row input {
-        font-size: 0.9rem;
-    }
+
+    .topic-meta { font-size: 0.6rem; }
+    .chan { font-size: 0.8rem; }
+    .msg-time { font-size: 0.75rem; }
+    .msg-text, .msg-user { font-size: 0.85rem; }
+
+    .irc-input-row { padding: 10px; }
+    .irc-input-row input { font-size: 0.9rem; }
+
     .irc-log {
         scrollbar-width: none;
     }
     .irc-log::-webkit-scrollbar {
         display: none;
     }
-    
-    /* Hide caret on mobile for "terminal" feel with virtual keyboard */
+
+    .irc-input-row input.virtual-mode {
+        pointer-events: none;
+        caret-color: transparent;
+        border-bottom: 1px solid var(--color-accent);
+    }
+
     input[readonly] {
         caret-color: transparent;
     }
-    
+
     .virtual-input-display {
         width: 100%;
         background: transparent;
@@ -808,28 +778,24 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
         padding: 0 10px;
         letter-spacing: 0.5px;
         min-height: 20px;
-        pointer-events: none; /* Let wrapper click open keyboard */
+        pointer-events: none;
         border-bottom: 1px solid #4e4e4e;
     }
-    
+
     .cursor-block {
         display: inline-block;
         width: 1px;
         height: 1.4em;
-        background: #f1f1f1; /* transparent block for now since user wants chars one by one */
+        background: #f1f1f1;
         margin-left: 2px;
         animation: blink 1s step-end infinite;
         vertical-align: bottom;
     }
     
     .virtual-placeholder {
-        color: #6f6f6f; /* Dim placeholder style */
+        color: #6f6f6f;
     }
 
     @keyframes blink { 50% { opacity: 0; } }
-
-    .section-content h3 {
-        padding-top: 12px;
-    }
 }
 </style>
