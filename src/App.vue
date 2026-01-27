@@ -13,6 +13,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from
 import { chatStore } from './store/chatStore';
 import { keyboardStore } from './store/keyboardStore';
 import VirtualKeyboard from './components/VirtualKeyboard.vue';
+import MatrixOverlay from './components/MatrixOverlay.vue';
 
 
 let cursorInterval = null;
@@ -106,6 +107,10 @@ const handleResize = () => {
 const isCapsLock = ref(false);
 const isHddActive = ref(false);
 const isPowerOn = ref(true);
+
+// Matrix Easter Egg State
+const showMatrixAnim = ref(false);
+let matrixKeyBuffer = '';
 
 const updateLockStates = (e) => {
   if (e.getModifierState) {
@@ -398,8 +403,26 @@ onUnmounted(() => {
 const handleGlobalKeydown = (e) => {
   const isEscape = e.key === 'Escape' || e.key === 'Esc';
   const isUpKey = e.key === 'ArrowUp' || e.key === 'Up';
-
+  
   if (isUpKey) isUpHeld.value = true;
+
+  // 1A. Matrix Easter Egg Detection (OWNEDGE)
+  // Only trigger if on Hero Section (activeTabIndex === 0)
+  if (activeTabIndex.value === 0 && !showMatrixAnim.value) {
+      if (/^[a-zA-Z]$/.test(e.key)) {
+          matrixKeyBuffer += e.key.toUpperCase();
+          if (matrixKeyBuffer.length > 20) matrixKeyBuffer = matrixKeyBuffer.slice(-20);
+          
+          if (matrixKeyBuffer.endsWith('GOD')) {
+              showMatrixAnim.value = true;
+                SoundManager.playGlitchSound(); // Nice audio feedback
+              setTimeout(() => {
+                  showMatrixAnim.value = false;
+                  matrixKeyBuffer = ''; // Reset
+              }, 3000);
+          }
+      }
+  }
 
   // 1. Check if we should block navigation (Easter Egg in progress)
   // If Up is held AND the current key is NOT the Up key, we block navigation
@@ -992,6 +1015,10 @@ onUnmounted(() => {
           </section>
         </div>
         
+
+        
+        <MatrixOverlay :active="showMatrixAnim" />
+
         <!-- Fixed Foreground Overlays -->
         <div class="scanlines" :class="{ 'optimized': isTurbo }"></div>
         <div class="vignette"></div>
