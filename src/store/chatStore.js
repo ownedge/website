@@ -379,6 +379,15 @@ export const chatStore = reactive({
 
         // 4. Send Heartbeat to confirm
         await this.sendHeartbeat();
+        
+        // Notify user if nickname was modified
+        if (this.chatNickname !== cleanNick) {
+             this.addMessage({ 
+                type: 'system', 
+                text: `*** Nickname '${cleanNick}' is taken. You are known as '${this.chatNickname}'.`,
+                localOnly: true 
+            });
+        }
     },
 
     clearHistory() {
