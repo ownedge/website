@@ -25,6 +25,28 @@ const sections = {
 
 const activeKey = ref(null);
 const viewportContent = ref(null);
+const activeComponentRef = ref(null);
+
+const fKeyLabelsMap = {
+    why: { F3: 'LINKEDIN', F4: 'SENDMSG' },
+    what: { F3: 'NEXT', F4: 'DETAIL' },
+    blog: { F3: 'TOP', F4: 'KUDOS', F5: 'COPYLINK' },
+    guestbook: { F3: 'SIGN' },
+    chat: { F3: 'NICKNAME' }
+};
+
+const fKeyLabels = computed(() => {
+    const tabData = props.tabs[props.activeIndex];
+    if (!tabData) return { F1: 'HELP', F2: !SoundManager.state.isMusicPlaying ? 'MUSIC ✓' : 'MUSIC ✗' };
+    const custom = fKeyLabelsMap[tabData.id] || {};
+    return {
+        F1: 'HELP',
+        F2: !SoundManager.state.isMusicPlaying ? 'MUSIC ✓' : 'MUSIC ✗',
+        F3: custom.F3,
+        F4: custom.F4,
+        F5: custom.F5
+    };
+});
 
 const activeTab = computed(() => {
     const tabData = props.tabs[props.activeIndex];
@@ -45,11 +67,23 @@ const selectTab = (index) => {
 const handleKeydown = (e) => {
     if (e.defaultPrevented) return;
 
-    // F-keys visual feedback
+    // F-keys visual feedback & Actions
     if (e.key.startsWith('F')) {
         e.preventDefault();
         if (activeKey.value !== e.key) SoundManager.playTypingSound();
         activeKey.value = e.key;
+
+        // Global Actions
+        if (e.key === 'F1') {
+            console.log("Help requested"); 
+        } else if (e.key === 'F2') {
+            SoundManager.toggleMusic();
+        } else {
+             // Context Actions
+             if (activeComponentRef.value && activeComponentRef.value.handleFKey) {
+                 activeComponentRef.value.handleFKey(e.key);
+             }
+        }
         return;
     }
 
@@ -143,7 +177,7 @@ onUnmounted(() => {
 
       <!-- Main Contents -->
       <div class="tui-viewport custom-scroll" :class="{ 'no-overflow': activeTab === ChatSection || activeTab === BlogSection || activeTab === GuestbookSection || activeTab === WhatSection }" ref="viewportContent">
-          <component :is="activeTab" v-if="activeTab" />
+          <component :is="activeTab" v-if="activeTab" ref="activeComponentRef" />
           <div v-else class="home-placeholder">
               <!-- No content for HOME tab inside Commander, as it maps back to Hero -->
           </div>
@@ -151,10 +185,11 @@ onUnmounted(() => {
 
       <!-- Bottom Function Keys -->
       <div class="tui-footer">
-        <div class="f-key" :class="{ active: activeKey === 'F1' }"><span>F1</span> <span class="f-label">HELP</span></div>
-        <div class="f-key" :class="{ active: activeKey === 'F2' }"><span>F2</span> <span class="f-label">LINK</span></div>
-        <div class="f-key" :class="{ active: activeKey === 'F3' }"><span>F3</span> <span class="f-label">VIEW</span></div>
-        <div class="f-key" :class="{ active: activeKey === 'F4' }"><span>F4</span> <span class="f-label">QUIT</span></div>
+        <div class="f-key" :class="{ active: activeKey === 'F1' }"><span>F1</span> <span class="f-label">{{ fKeyLabels.F1 }}</span></div>
+        <div class="f-key" :class="{ active: activeKey === 'F2' }"><span>F2</span> <span class="f-label">{{ fKeyLabels.F2 }}</span></div>
+        <div v-if="fKeyLabels.F3" class="f-key" :class="{ active: activeKey === 'F3' }"><span>F3</span> <span class="f-label">{{ fKeyLabels.F3 }}</span></div>
+        <div v-if="fKeyLabels.F4" class="f-key" :class="{ active: activeKey === 'F4' }"><span>F4</span> <span class="f-label">{{ fKeyLabels.F4 }}</span></div>
+        <div v-if="fKeyLabels.F5" class="f-key" :class="{ active: activeKey === 'F5' }"><span>F5</span> <span class="f-label">{{ fKeyLabels.F5 }}</span></div>
         <div class="f-key sys-status">
             <span :style="{ color: fpsColor, backgroundColor: 'transparent', marginRight: '15px' }">{{ fps }} FPS</span>
             <div><span>ONLINE</span></div>

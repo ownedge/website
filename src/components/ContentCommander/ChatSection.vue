@@ -111,6 +111,36 @@ watch(() => chatStore.messages, () => {
     scrollToBottom();
 }, { deep: true });
 
+const isNicknameModalOpen = ref(false);
+const newNickname = ref('');
+
+const openNicknameModal = () => {
+    newNickname.value = chatStore.chatNickname || chatStore.nickname || '';
+    isNicknameModalOpen.value = true;
+    SoundManager.playTypingSound();
+    // Focus next tick
+    nextTick(() => {
+        const input = document.getElementById('nickname-input');
+        if (input) input.focus();
+    });
+};
+
+const submitNickname = () => {
+    if (newNickname.value.trim().length >= 3) {
+        chatStore.changeNickname(newNickname.value.trim());
+        isNicknameModalOpen.value = false;
+        SoundManager.playTypingSound();
+    }
+};
+
+const handleFKey = (key) => {
+    if (key === 'F3') {
+        openNicknameModal();
+    }
+};
+
+defineExpose({ handleFKey });
+
 import mapPng from '../../assets/geo_map.png';
 
 const mapCanvas = ref(null);
@@ -506,6 +536,33 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
         </div>
       </div>
     </div>
+    <!-- Nickname Modal -->
+    <Transition name="fade">
+        <div v-if="isNicknameModalOpen" class="modal-overlay" @click.self="isNicknameModalOpen = false">
+            <div class="modal-content">
+                <div class="popup-header">
+                    <span>CHANGE NICKNAME</span>
+                    <div class="esc-label" @click="isNicknameModalOpen = false">ESC</div>
+                </div>
+                <div class="form-body">
+                    <div class="input-wrapper focus-locked active">
+                         <input 
+                            id="nickname-input"
+                            v-model="newNickname" 
+                            type="text" 
+                            maxlength="20" 
+                            placeholder="Enter new nickname..."
+                            @keydown.enter="submitNickname"
+                            style="background: #111; padding: 10px; width: 100%; border: 1px solid #333; color: #fff; font-family: 'Microgramma', monospace;"
+                        />
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px; text-align: center;">
+                        <button class="sign-btn custom-btn" @click="submitNickname">[ SAVE ]</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Transition>
   </div>
 </template>
 
@@ -798,5 +855,63 @@ const isVirtualMode = computed(() => keyboardStore.isVisible.value && window.inn
     }
 
     @keyframes blink { 50% { opacity: 0; } }
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    background: #000;
+    border: 2px solid var(--color-accent);
+    box-shadow: 0 0 20px rgba(64, 224, 208, 0.2);
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    max-height: 90vh;
+}
+
+.popup-header {
+    background: var(--color-accent);
+    color: #000;
+    padding: 8px 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.esc-label {
+    background: #000;
+    color: var(--color-accent);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.form-body {
+    padding: 20px;
+}
+
+.custom-btn {
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    padding: 8px 16px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Microgramma', monospace;
+}
+.custom-btn:hover {
+    background: rgba(64, 224, 208, 0.1);
 }
 </style>

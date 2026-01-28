@@ -30,6 +30,33 @@ const businessTabs = [
 
 const activeTabId = ref('services');
 
+const services = [
+  { title: 'MISSION CRITICAL', desc: 'High-integrity display and rendering systems for flight, railway, metro, and ferry operations. Powering public-facing arrival and departure screens with zero-tolerance for downtime.' },
+  { title: 'INTERACTIVE SYSTEMS', desc: 'Engineering efficient, high-fidelity interfaces and custom design systems. Specialized in WebGL, real-time visualization, and reactive architecture. Ranging from unique websites to movie tech props.' },
+  { title: 'INFRASTRUCTURE', desc: 'Design and deployment of resilient, automated, permanent digital infrastructure. Focus on secure, high-availability architecture for modern enterprise assets.' },
+  { title: 'AEROSPACE & AVIONICS', desc: 'Specialized backcountry flight training and certification protocols. Engineering of custom avionics suites, electronics integration and upgrades.' },
+  { title: 'STRATEGIC VENTURE', desc: 'Strategic guidance and seed-stage funding for technical startups. Providing the architectural and capital foundation for ambitious embryonic projects.' },
+  { title: 'PRECISION ENGINEERING', desc: 'Industrial design and manufacturing of custom equipment. Expertise in composite materials, CNC machining, 3D printing, electronics and acoustics.' }
+];
+
+const activeServiceIndex = ref(0);
+const isDetailOpen = ref(false);
+
+const handleFKey = (key) => {
+    if (activeTabId.value === 'services') {
+        if (key === 'F3') {
+             activeServiceIndex.value = (activeServiceIndex.value + 1) % services.length;
+             SoundManager.playTypingSound();
+             // Ensure visible if possible?
+        } else if (key === 'F4') {
+             isDetailOpen.value = true;
+             SoundManager.playTypingSound();
+        }
+    }
+};
+
+defineExpose({ handleFKey });
+
 const selectTab = (id) => {
   if (activeTabId.value !== id) {
     activeTabId.value = id;
@@ -38,6 +65,11 @@ const selectTab = (id) => {
 };
 
 const handleKeydown = (e) => {
+  if (isDetailOpen.value && (e.key === 'Escape' || e.key === 'Esc')) {
+      isDetailOpen.value = false;
+      return;
+  }
+  
   const currentIndex = businessTabs.findIndex(t => t.id === activeTabId.value);
   
   if (e.key === 'ArrowDown') {
@@ -57,6 +89,13 @@ const handleKeydown = (e) => {
       const viewport = document.querySelector('.business-viewport');
       if (viewport) {
           viewport.scrollBy({ top: viewport.clientHeight * 0.5, behavior: 'smooth' });
+      }
+  } else if (e.key === 'Enter') {
+      if (activeTabId.value === 'services' && !isDetailOpen.value) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          isDetailOpen.value = true;
+          SoundManager.playTypingSound();
       }
   }
 };
@@ -96,30 +135,16 @@ onUnmounted(() => {
           <div v-if="activeTabId === 'services'" key="services" class="tab-content">
             <h4>SERVICES</h4>
             <div class="service-grid">
-              <div class="service-block">
-                <h5>MISSION CRITICAL</h5>
-                <p>High-integrity display and rendering systems for flight, railway, metro, and ferry operations. Powering public-facing arrival and departure screens with zero-tolerance for downtime.</p>
-              </div>
-              <div class="service-block">
-                <h5>INTERACTIVE SYSTEMS</h5>
-                <p>Engineering efficient, high-fidelity interfaces and custom design systems. Specialized in WebGL, real-time visualization, and reactive architecture. Ranging from unique websites to movie tech props.</p>
-              </div>
-              <div class="service-block">
-                <h5>INFRASTRUCTURE</h5>
-                <p>Design and deployment of resilient, automated, permanent digital infrastructure. Focus on secure, high-availability architecture for modern enterprise assets.</p>
-              </div>
-              <div class="service-block">
-                <h5>AEROSPACE & AVIONICS</h5>
-                <p>Specialized backcountry flight training and certification protocols. Engineering of custom avionics suites, electronics integration and upgrades.</p>
-              </div>
-              <div class="service-block">
-                <h5>STRATEGIC VENTURE</h5>
-                <p>Strategic guidance and seed-stage funding for technical startups. Providing the architectural and capital foundation for ambitious embryonic projects.</p>
-              </div>
-              <div class="service-block">
-                <h5>PRECISION ENGINEERING</h5>
-                <p>Industrial design and manufacturing of custom equipment. Expertise in composite materials, CNC machining, 3D printing, electronics and acoustics.</p>
-              </div>
+               <div 
+                 v-for="(svc, idx) in services" 
+                 :key="idx" 
+                 class="service-block" 
+                 :class="{ active: idx === activeServiceIndex }"
+                 @click="activeServiceIndex = idx; isDetailOpen = true;"
+               >
+                 <h5>{{ svc.title }}</h5>
+                 <p>{{ svc.desc }}</p>
+               </div>
             </div>
           </div>
 
@@ -140,6 +165,24 @@ onUnmounted(() => {
         </Transition>
       </div>
     </div>
+    
+    <!-- Detail Modal -->
+    <Transition name="fade">
+      <div v-if="isDetailOpen" class="modal-overlay" @click.self="isDetailOpen = false">
+         <Transition name="popup-reveal" appear>
+            <div class="modal-content">
+                <div class="popup-header">
+                   <span>DETAILS</span>
+                   <div class="esc-label" @click="isDetailOpen = false">ESC</div>
+                </div>
+                <div class="detail-body">
+                   <h4>{{ services[activeServiceIndex].title }}</h4>
+                   <p>{{ services[activeServiceIndex].desc }}</p>
+                </div>
+            </div>
+         </Transition>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -355,7 +398,20 @@ onUnmounted(() => {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
 
+.popup-reveal-enter-active {
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.popup-reveal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.popup-reveal-leave-to {
+  opacity: 0;
+}
 
 .fade-enter-active,
 .fade-leave-active {
@@ -429,5 +485,102 @@ onUnmounted(() => {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
+}
+
+/* Service Block Highlight */
+.service-block {
+    cursor: pointer; /* Ensure pointer shows interactivity */
+    transition: all 0.2s ease;
+    border: 1px solid transparent; /* Prepare for border */
+    padding: 10px; /* Ensure padding inside border */
+}
+
+.service-block.active {
+    border-color: var(--color-accent);
+    background: rgba(64, 224, 208, 0.05);
+    box-shadow: 0 0 10px rgba(64, 224, 208, 0.1);
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0.95;
+}
+
+.modal-content {
+    background: #000;
+    opacity: 0.95; 
+    border: 1px solid var(--color-accent);
+    box-shadow: 0 0 30px rgba(64, 224, 208, 0.1);
+    width: 450px;
+    max-width: 90%;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .modal-content {
+        position: absolute; 
+        top: 30%; 
+        left: 50%;
+        transform: translate(-50%, -30%);
+    }
+}
+
+.popup-header {
+    background: var(--color-accent);
+    color: #000;
+    padding: 4px 10px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.esc-label {
+    font-size: 0.7rem;
+    color: #000;
+    cursor: pointer;
+    font-family: 'Microgramma', monospace;
+    letter-spacing: 1px;
+    padding: 0 5px;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.esc-label:hover {
+    background: #000;
+    color: var(--color-accent);
+}
+
+.detail-body {
+    padding: 24px 30px 30px 30px;
+}
+
+.detail-body h4 {
+    color: var(--color-accent);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.detail-body p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #ccc;
 }
 </style>

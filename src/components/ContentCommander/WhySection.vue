@@ -1,3 +1,150 @@
+<script setup>
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import SoundManager from '../../sfx/SoundManager';
+import { chatStore } from '../../store/chatStore';
+
+const isModalOpen = ref(false);
+const isSending = ref(false);
+const showSuccess = ref(false);
+const emailForm = ref({
+    name: '',
+    subject: 'hello from the website',
+    message: ''
+});
+
+const activeField = ref('name');
+const nameInput = ref(null);
+const subjectInput = ref(null);
+const messageInput = ref(null);
+
+const setActive = (field) => {
+    activeField.value = field;
+};
+
+const focusInput = () => {
+    nextTick(() => {
+        if (activeField.value === 'name' && nameInput.value) nameInput.value.focus();
+        else if (activeField.value === 'subject' && subjectInput.value) subjectInput.value.focus();
+        else if (activeField.value === 'message' && messageInput.value) messageInput.value.focus();
+    });
+};
+
+const openModal = () => {
+    emailForm.value.name = chatStore.nickname || '';
+    emailForm.value.subject = 'hello from the website';
+    
+    isModalOpen.value = true;
+    activeField.value = 'message'; // Reset to message
+    focusInput();
+    SoundManager.playTypingSound();
+};
+
+const API_URL = import.meta.env.PROD 
+  ? '/api/send_report.php' 
+  : '/api/send_report.php';
+
+const closeModal = () => {
+    if (isSending.value) return;
+    isModalOpen.value = false;
+    showSuccess.value = false;
+};
+
+const sendEmail = async () => {
+    if (!emailForm.value.message.trim() || isSending.value) return;
+    
+    isSending.value = true;
+    SoundManager.playTypingSound();
+
+    // Simulate Network Delay for Effect (min 1000ms)
+    const delayPromise = new Promise(resolve => setTimeout(resolve, 1000));
+    
+    try {
+        const payload = {
+            name: emailForm.value.name,
+            subject: emailForm.value.subject,
+            message: emailForm.value.message
+        };
+
+        const fetchPromise = fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const [response] = await Promise.all([fetchPromise, delayPromise]);
+        
+        if (response.ok) {
+            showSuccess.value = true;
+            
+            setTimeout(() => {
+                closeModal();
+                // Reset form
+                emailForm.value.message = '';
+                showSuccess.value = false;
+            }, 1500);
+        } else {
+             console.error('Transmission failed', await response.text());
+        }
+    } catch (e) {
+        console.error('Transmission error', e);
+    } finally {
+        isSending.value = false;
+    }
+};
+
+const handleFKey = (key) => {
+    if (key === 'F3') {
+        window.open('https://www.linkedin.com/in/pedrocatalao', '_blank');
+        SoundManager.playTypingSound();
+    } else if (key === 'F4') {
+        openModal();
+    }
+};
+
+const handleKeydown = (e) => {
+    if (isModalOpen.value) {
+        // Prevent bubbling for key nav
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Escape', 'Esc', 'Enter'].includes(e.key)) {
+             e.stopPropagation();
+        }
+
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            closeModal();
+        } else if (e.key === 'Enter') {
+            // Prevent default newlines if submitting, unless Shift+Enter?
+            if (!e.shiftKey) { 
+                e.preventDefault();
+                sendEmail();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (activeField.value === 'message') activeField.value = 'subject';
+            else if (activeField.value === 'subject') activeField.value = 'name';
+            focusInput();
+            SoundManager.playTypingSound();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (activeField.value === 'name') activeField.value = 'subject';
+            else if (activeField.value === 'subject') activeField.value = 'message';
+            focusInput();
+            SoundManager.playTypingSound();
+        }
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown);
+});
+
+defineExpose({
+    handleFKey
+});
+</script>
+
 <template>
   <div class="section-content animate-in">
     <h3>> WHY</h3>
@@ -33,6 +180,94 @@
         </div>
       </div>
     </div>
+
+    <!-- Email Modal -->
+    <Transition name="fade">
+      <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
+        <Transition name="popup-reveal" appear>
+            <div class="modal-content">
+              <div class="popup-header">
+                <span>COMMS LINK</span>
+                <div class="esc-label" @click="closeModal">ESC</div>
+              </div>
+          
+          <div v-if="!showSuccess" class="form-body">
+             <div class="form-group">
+                <label>NICKNAME:</label>
+                <div 
+                    class="input-wrapper focus-locked" 
+                    :class="{ active: activeField === 'name' }"
+                    @click="setActive('name')"
+                >
+                    <input 
+                        ref="nameInput"
+                        type="text" 
+                        v-model="emailForm.name" 
+                        placeholder="YOUR NAME" 
+                        @focus="setActive('name')"
+                    />
+                </div>
+             </div>
+
+             <div class="form-group">
+                <label>SUBJECT:</label>
+                <div 
+                    class="input-wrapper focus-locked" 
+                    :class="{ active: activeField === 'subject' }"
+                    @click="setActive('subject')"
+                >
+                    <input 
+                        ref="subjectInput"
+                        type="text" 
+                        v-model="emailForm.subject" 
+                        placeholder="SUBJECT" 
+                        @focus="setActive('subject')"
+                    />
+                </div>
+             </div>
+             
+             <div class="form-group">
+                <label>MESSAGE:</label>
+                <div 
+                    class="input-wrapper focus-locked" 
+                    :class="{ active: activeField === 'message' }"
+                    @click="setActive('message')"
+                >
+                    <textarea 
+                      ref="messageInput"
+                      v-model="emailForm.message" 
+                      placeholder="ENTER MESSAGE..." 
+                      class="custom-textarea"
+                      @focus="setActive('message')"
+                    ></textarea>
+                </div>
+             </div>
+
+            <div class="modal-actions">
+                <div 
+                  class="submit-btn-styled" 
+                  :class="{ disabled: isSending || !emailForm.message.trim() }"
+                  @click="sendEmail"
+                >
+                    <div class="submit-highlight"></div>
+                    <span class="submit-text">{{ isSending ? 'TRANSMITTING...' : 'TRANSMIT' }}</span>
+                </div>
+                <div 
+                    class="enter-hint" 
+                    :class="{ visible: !isSending && emailForm.message.trim() }"
+                > <span class="key-hint">⏎</span></div>
+            </div>
+          </div>
+
+          <div v-else class="form-body">
+            <div class="success-message">
+                <span class="blink">></span> TRANSMISSION INITIATED.
+            </div>
+          </div>
+        </div>
+        </Transition>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -252,5 +487,271 @@
     .signature-line {
         font-size: 1.1rem;
     }
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0.95;
+}
+
+.modal-content {
+    background: #000;
+    opacity: 0.95; 
+    border: 1px solid var(--color-accent);
+    box-shadow: 0 0 30px rgba(64, 224, 208, 0.1);
+    width: 450px;
+    max-width: 90%;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .modal-content {
+        position: absolute; 
+        top: 30%; 
+        left: 50%;
+        transform: translate(-50%, -30%);
+    }
+}
+
+.popup-header {
+    background: var(--color-accent);
+    color: #000;
+    padding: 4px 10px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.esc-label {
+    font-size: 0.7rem;
+    color: #000;
+    cursor: pointer;
+    font-family: 'Microgramma', monospace;
+    letter-spacing: 1px;
+    padding: 0 5px;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.esc-label:hover {
+    background: #000;
+    color: var(--color-accent);
+}
+
+.form-body {
+    padding: 24px 30px 9px 30px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Focus/Blur Highlight */
+.input-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border: 1px solid var(--color-accent);
+    background: rgba(64, 224, 208, 0.08); /* Subtle focus tint */
+    box-shadow: 0 0 15px rgba(64, 224, 208, 0.1);
+    z-index: 5;
+    pointer-events: none;
+    border-radius: 4px;
+    
+    /* Animation Initial State */
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(4px);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.input-wrapper.active::before,
+.input-wrapper:focus-within::before {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.form-group input, .custom-textarea {
+    width: 100%;
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    font-family: 'Microgramma', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.custom-textarea {
+    height: 100px;
+    resize: none;
+    display: block;
+}
+
+/* Submit Button */
+.submit-btn-styled {
+    position: relative;
+    border-radius: 4px;
+    font-family: 'Microgramma', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--color-accent);
+    cursor: pointer;
+    text-transform: uppercase;
+    margin-top: -5px;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    border: 1px solid transparent; 
+    transition: all 0.2s ease;
+    user-select: none;
+    overflow: hidden; 
+    background: rgba(0,0,0,0.5); 
+    display: inline-block;
+}
+
+.submit-highlight {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--color-accent);
+    transform: translateX(-101%);
+    transition: transform 0.4s cubic-bezier(0.5, -0.8, 0.5, 1.9);
+    z-index: 0;
+    animation: glitch-jitter 4s infinite;
+    transform: skewX(-20deg) translateX(-250%);
+    border-radius: 3px 6px 1px 2px;
+}
+
+@keyframes glitch-jitter {
+    0%, 92% { clip-path: inset(0 0 0 0); opacity: 1; }
+    93% { clip-path: inset(10% 0 30% 0); opacity: 0.8; }
+    95% { clip-path: inset(40% 0 10% 0); opacity: 1; }
+    98% { clip-path: inset(0 0 50% 0); opacity: 0.9; }
+    100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+.submit-text {
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+/* Active State */
+.submit-btn-styled:not(.disabled) .submit-highlight {
+    transform: skewX(-10deg) translateX(0);
+}
+
+.submit-btn-styled:not(.disabled) .submit-text {
+    color: #000;
+}
+
+.submit-btn-styled.disabled {
+    color: #555;
+    cursor: default;
+    opacity: 0.5;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    align-items: center;
+}
+
+.enter-hint {
+    position: absolute;
+    left: calc(50% + 90px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px);
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: bold;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    font-family: 'Microgramma', monospace;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.enter-hint.visible {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+.key-hint {
+    display: inline-block;
+    padding: 0 4px;
+    color: #666;
+    font-size: 1.4rem;
+    vertical-align: middle;
+}
+
+.success-message {
+    text-align: center;
+    color: var(--color-accent);
+    font-weight: bold;
+    padding: 20px 0;
+}
+
+.blink { animation: blink-fast 0.6s step-end infinite; }
+@keyframes blink-fast { 50% { opacity: 0; } }
+
+
+/* Transitions */
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.popup-reveal-enter-active {
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.popup-reveal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.popup-reveal-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.4s ease;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
 }
 </style>

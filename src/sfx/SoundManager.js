@@ -23,6 +23,10 @@ class SoundManager {
             audioData: null,
             dialUpData: null
         };
+        this.state = reactive({
+            isMusicPlaying: false,
+            currentSongIndex: 0
+        });
     }
 
     init() {
@@ -412,11 +416,16 @@ class SoundManager {
     }
 
     toggleMusic() {
-        if (this.state.isMusicPlaying) {
-            this.stopTrackerMusic();
-        } else {
+        if (!this.trackerPlayer) {
             this.playTrackerMusic(this.playlist[this.state.currentSongIndex]);
             this.state.isMusicPlaying = true;
+            return;
+        }
+
+        // Use libopenmpt togglePause if available
+        if (this.trackerPlayer && this.trackerPlayer.togglePause) {
+            this.trackerPlayer.togglePause();
+            this.state.isMusicPlaying = !this.state.isMusicPlaying;
         }
     }
 

@@ -205,6 +205,14 @@ const formatDate = (iso) => {
     });
 };
 
+const handleFKey = (key) => {
+    if (key === 'F3') {
+        openModal();
+    }
+};
+
+defineExpose({ handleFKey });
+
 const handleKeyDown = (e) => {
     if (isModalOpen.value) {
         // If the modal is open, we consume these specific keys and prevent them from bubbling

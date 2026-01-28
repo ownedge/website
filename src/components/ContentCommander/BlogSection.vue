@@ -194,6 +194,23 @@ const copyLink = async () => {
     }
 };
 
+const contentColumnRef = ref(null);
+
+const handleFKey = (key) => {
+    if (key === 'F3') {
+        if (contentColumnRef.value) {
+            contentColumnRef.value.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        SoundManager.playTypingSound();
+    } else if (key === 'F4') {
+        giveKudo();
+    } else if (key === 'F5') {
+        copyLink();
+    }
+};
+
+defineExpose({ handleFKey });
+
 const handleKeydown = (e) => {
   if (posts.value.length === 0) return;
   const currentIndex = posts.value.findIndex(p => p.id === activePostId.value);
@@ -268,7 +285,7 @@ onUnmounted(() => {
             </div>
             <div v-else-if="postContent" key="content" class="post-layout">
                 <!-- Content Column -->
-                <div class="post-content-column custom-scroll">
+                <div class="post-content-column custom-scroll" ref="contentColumnRef">
                     <div class="post-header-meta" v-if="activePost">
                          <h1>{{ activePost.displayTitle || activePost.title }}</h1>
                     </div>
