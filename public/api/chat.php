@@ -249,6 +249,38 @@ if ($action === 'presence' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+if ($action === 'rename' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+    if (isset($data['oldNick']) && isset($data['newNick'])) {
+        $old = $data['oldNick'];
+        $new = $data['newNick'];
+        
+        if (isset($users[$old])) {
+            $userData = $users[$old];
+            unset($users[$old]);
+            
+            $userData['seen'] = time();
+            $users[$new] = $userData;
+            save_data($users_file, $users);
+            
+            $messages = fetch_data($log_file);
+            $messages[] = [
+                'id' => sprintf("%.4f", microtime(true)) . rand(100, 999),
+                'type' => 'system',
+                'text' => "*** $old is now known as $new",
+                'timestamp' => date('c')
+            ];
+            save_data($log_file, $messages);
+            
+            echo json_encode(["status" => "ok"]);
+        } else {
+             echo json_encode(["status" => "error", "message" => "Old nick not found"]);
+        }
+        exit;
+    }
+}
+
 if ($action === 'leave' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);

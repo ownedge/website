@@ -342,16 +342,9 @@ export const chatStore = reactive({
         }
 
         const cleanNick = newNick.trim();
-        
-        // 1. Leave with old nick (using current chatNickname)
-        await this.leave();
+        const oldNick = this.chatNickname || this.nickname;
 
-        // 2. Update persistence
-        this.nickname = cleanNick;
-        localStorage.setItem('chat_nickname', cleanNick);
-        this.chatNickname = null; // Reset effective nick
-
-        // 3. Negotiate unique nickname again (re-using logic from init)
+        // 1. Check availability
         await this.fetchUsers(false);
         let candidate = cleanNick;
         let suffix = 2;
@@ -367,21 +360,25 @@ export const chatStore = reactive({
             candidate = `${cleanNick}${suffix}`;
             suffix++;
         }
-        this.chatNickname = candidate;
+        
+        const finalNewNick = candidate;
 
-        // 4. Confirm with new presence
+        // 2. Call Rename API
+        try {
+            await fetch(`${API_BASE}?action=rename`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldNick, newNick: finalNewNick })
+            });
+        } catch(e) { console.error(e); }
+
+        // 3. Update Local State
+        this.nickname = cleanNick; // Preferred
+        localStorage.setItem('chat_nickname', cleanNick);
+        this.chatNickname = finalNewNick; // Effective
+
+        // 4. Send Heartbeat to confirm
         await this.sendHeartbeat();
-        
-        let msg = `*** Your nickname is now ${this.chatNickname}`;
-        if (this.chatNickname !== cleanNick) {
-            msg += ` (original '${cleanNick}' was taken)`;
-        }
-        
-        this.addMessage({ 
-            type: 'system', 
-            text: msg,
-            localOnly: true 
-        });
     },
 
     clearHistory() {

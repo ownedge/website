@@ -94,8 +94,33 @@ const sendEmail = async () => {
 
 const handleFKey = (key) => {
     if (key === 'F3') {
-        window.open('https://www.linkedin.com/in/pedrocatalao', '_blank');
         SoundManager.playTypingSound();
+
+        setTimeout(() => {
+            const url = 'https://www.linkedin.com/in/pedrocatalao';
+            
+            // Create a temporary link
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank'; 
+            a.rel = 'noopener noreferrer';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            
+            // Attempt to trigger "Open in Background Tab"
+            const evt = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                metaKey: true, // Cmd (Mac)
+                ctrlKey: true, // Ctrl (Win)
+                shiftKey: false
+            });
+            
+            a.dispatchEvent(evt);
+            
+            setTimeout(() => document.body.removeChild(a), 100);
+        }, 300);
     } else if (key === 'F4') {
         openModal();
     }

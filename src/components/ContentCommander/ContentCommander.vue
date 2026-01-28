@@ -112,6 +112,10 @@ const handleKeyup = (e) => {
     }
 }
 
+const handleBlur = () => {
+    activeKey.value = null;
+};
+
 const fps = ref(60);
 let frameCount = 0;
 let lastTime = performance.now();
@@ -153,12 +157,14 @@ const fpsColor = computed(() => {
 onMounted(() => {
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
+    window.addEventListener('blur', handleBlur);
     trackFps();
 });
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown);
     window.removeEventListener('keyup', handleKeyup);
+    window.removeEventListener('blur', handleBlur);
     if (fpsReqId) cancelAnimationFrame(fpsReqId);
 });
 
