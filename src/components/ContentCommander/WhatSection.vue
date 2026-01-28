@@ -220,14 +220,10 @@ onUnmounted(() => {
     scrollbar-color: rgba(62, 229, 212, 0.812) transparent;
     height: 100%;
     position: relative;
-    /* Grid layout inside needed for transition stacking? 
-       Actually, if we scroll, we might not need the stack area so much, or the stack should be the scrolling content?
-       If we want "Services" and "Collabs" to transition in place, they should likely be absolute positioned?
-       Wait, if we scroll, position: absolute breaks flow. 
-       Let's use standard block flow for content. 
-       Transitions will fade out/in.
-    */
-    display: block; 
+    display: grid; /* Changed for stacking */
+    grid-template-columns: 100%;
+    grid-template-rows: 1fr;
+    align-items: start;
 }
 .business-viewport::-webkit-scrollbar { width: 6px; }
 .business-viewport::-webkit-scrollbar-thumb { background: rgba(64, 224, 208, 0.4); }
@@ -236,7 +232,7 @@ onUnmounted(() => {
 .tab-content {
     width: 100%;
     padding-bottom: 40px;
-    animation: fadeIn 0.4s ease;
+    grid-area: 1 / 1; /* Stack in same cell */
 }
 
 .tab-content h4 {
